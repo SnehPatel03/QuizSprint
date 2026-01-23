@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
 
 const generateTokenAndSaveInCookies = (user: any, res:Response | any) => {
-  
+  console.log("users role", user)
   const token = jwt.sign(
     {
       id: user.id,

@@ -80,7 +80,7 @@ export const login = async (req: Request, res: Response) => {
     return res.status(401).json({ message: "Invalid Password" });
   }
 
-  const token = generateTokenAndSaveInCookies(user.id, res);
+  const token = generateTokenAndSaveInCookies(user, res);
 
   res.json({
     message: "Login successful",
