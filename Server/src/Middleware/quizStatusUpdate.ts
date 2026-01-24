@@ -16,6 +16,13 @@ export const updateQuizStatusMiddleware = async (req:Request | any, res:Response
           data: { status: "LIVE" },
         });
       }
+      if (quiz.status === "LIVE" && now <= quiz.startTime) {
+        await prisma.quiz.update({
+          where: { id: quiz.id },
+          data: { status: "DRAFT" },
+        });
+      }
+
 
     //   if (quiz.status === "LIVE") {
     //     const allRoundsCompleted = quiz.rounds.every(

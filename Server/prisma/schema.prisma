@@ -64,7 +64,9 @@ model Question {
   createdAt DateTime @default(now())
   options   Option[]
   round     Round    @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  answers   Answer[]  
 }
+
 
 model Option {
   id         String   @id @default(uuid())
@@ -97,9 +99,22 @@ model RoundAttempt {
   createdAt     DateTime    @default(now())
   quizAttempt   QuizAttempt @relation(fields: [quizAttemptId], references: [id], onDelete: Cascade)
   round         Round       @relation(fields: [roundId], references: [id], onDelete: Cascade)
-
+  answers       Answer[]  
   @@unique([quizAttemptId, roundId])
 }
+
+model Answer {
+  id               String       @id @default(uuid())
+  roundAttemptId   String
+  questionId       String
+  selectedOptionId String
+  isCorrect        Boolean
+  createdAt        DateTime     @default(now())
+
+  roundAttempt     RoundAttempt @relation(fields: [roundAttemptId], references: [id], onDelete: Cascade)
+  question         Question     @relation(fields: [questionId], references: [id], onDelete: Cascade)
+}
+
 
 enum Role {
   USER

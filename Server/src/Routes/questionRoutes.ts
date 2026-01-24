@@ -13,6 +13,7 @@ const router = Router();
 router.use(authorize)
 router.use(isAdmin)
 
+
 router.post("/createQue", createQuestion);
 router.put("/updateQue/:id", updateQuestion);
 router.delete("/deleteQue/:id", deleteQuestion);

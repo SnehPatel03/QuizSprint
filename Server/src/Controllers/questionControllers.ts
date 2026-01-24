@@ -27,7 +27,7 @@ export const createQuestion = async (req: Request, res: Response) => {
 
     const { quizId, roundNumber, text, options } = parsed.data;
     const hasCorrectOption = options.some((o) => o.isCorrect);
-
+  
     if (!hasCorrectOption) {
       return res.status(400).json({
         message: "At least one option must be marked as correct",

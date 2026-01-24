@@ -72,7 +72,7 @@ export const createQuiz = async (
         createdBy: req.user.id,
         rounds: {
           create: [
-            { roundNumber: 1, timeLimit: 300, maxParticipants },
+            { roundNumber: 1, timeLimit: 900, maxParticipants },
             { roundNumber: 2, timeLimit: 300, maxParticipants: round2Players },
             { roundNumber: 3, timeLimit: 300, maxParticipants: round3Players },
           ],
