@@ -15,18 +15,24 @@ model User {
   name      String
   password  String
   attempts  QuizAttempt[]
+  quizzes   Quiz[] 
 }
 
 model Quiz {
   id              String        @id @default(uuid())
   title           String
-  createdAt       DateTime      @default(now())
   description     String
+  createdAt       DateTime      @default(now())
+  startTime       DateTime
+  status          QuizStatus    @default(DRAFT)
+
   maxParticipants Int
   round2Players   Int
   round3Players   Int
-  startTime       DateTime
-  status          QuizStatus    @default(DRAFT)
+
+  createdBy       String
+  admin           User          @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+
   attempts        QuizAttempt[]
   rounds          Round[]
 }
@@ -36,14 +42,19 @@ model Round {
   quizId          String
   roundNumber     Int
   timeLimit       Int
-  createdAt       DateTime       @default(now())
+  status        RoundStatus @default(PENDING)
   maxParticipants Int
-  passPercentage  Int
+  createdAt       DateTime       @default(now())
   questions       Question[]
-  quiz            Quiz           @relation(fields: [quizId], references: [id])
+  quiz            Quiz           @relation(fields: [quizId], references: [id], onDelete: Cascade)
   roundAttempts   RoundAttempt[]
 
   @@unique([quizId, roundNumber])
+}
+enum RoundStatus {
+  PENDING
+  ACTIVE
+  COMPLETED
 }
 
 model Question {
