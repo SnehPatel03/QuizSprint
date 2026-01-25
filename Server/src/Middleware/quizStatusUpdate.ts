@@ -23,22 +23,9 @@ export const updateQuizStatusMiddleware = async (req:Request | any, res:Response
         });
       }
 
-
-    //   if (quiz.status === "LIVE") {
-    //     const allRoundsCompleted = quiz.rounds.every(
-    //       (round) => round.roundAttempts?.length > 0 // or other logic
-    //     );
-    //     if (allRoundsCompleted) {
-    //       await prisma.quiz.update({
-    //         where: { id: quiz.id },
-    //         data: { status: "COMPLETED" },
-    //       });
-    //     }
-    //   }
     }
   } catch (err) {
     console.error("Quiz status update error:", err);
   }
-
   next();
 };

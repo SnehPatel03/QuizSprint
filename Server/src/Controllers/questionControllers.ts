@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { prisma } from "../lib/prisma";
-import { string, z } from "zod";
+import { z } from "zod";
 
 const optionSchema = z.object({
   text: z.string().min(1, "Option text is required"),
@@ -17,7 +17,7 @@ const createQuestionSchema = z.object({
 export const createQuestion = async (req: Request, res: Response) => {
   try {
     const parsed = createQuestionSchema.safeParse(req.body);
-
+    const quizId = req.params;
     if (!parsed.success) {
       return res.status(400).json({
         message: "Validation failed",
@@ -25,15 +25,14 @@ export const createQuestion = async (req: Request, res: Response) => {
       });
     }
 
-    const { quizId, roundNumber, text, options } = parsed.data;
+    const { roundNumber, text, options } = parsed.data;
     const hasCorrectOption = options.some((o) => o.isCorrect);
-  
+
     if (!hasCorrectOption) {
       return res.status(400).json({
         message: "At least one option must be marked as correct",
       });
     }
-
     const round = await prisma.round.findFirst({
       where: {
         quizId,
@@ -43,7 +42,8 @@ export const createQuestion = async (req: Request, res: Response) => {
 
     if (!round) {
       return res.status(404).json({
-        message: `Round ${roundNumber} not found for this quiz`,
+        message: `Round ${roundNumber} not found f
+        or this quiz`,
       });
     }
 
@@ -150,21 +150,18 @@ export const updateQuestion = async (req: Request | any, res: Response) => {
 };
 
 export const deleteQuestion = async (req: Request | any, res: Response) => {
-
   try {
-    
-    const {id} = req.params
+    const { id } = req.params;
     await prisma.question.delete({
       where: { id },
     });
     return res.status(200).json({
-      message : "Question deleted Successfully"
-
-    })
+      message: "Question deleted Successfully",
+    });
   } catch (error) {
     console.error("Update Question Error:", error);
     return res.status(500).json({
       message: "Error Deleteing question",
     });
   }
-}
+};

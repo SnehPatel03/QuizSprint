@@ -3,7 +3,7 @@ import { prisma } from "../lib/prisma";
 
 export const checkUserRoundTime = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { roundId, userId } = req.body; // userId from auth token
+    const { roundId, userId } = req.body;
 
     if (!roundId) return res.status(400).json({ message: "Round ID required" });
 

@@ -44,6 +44,75 @@ export const getAllQuizUserLive = async (req: Request, res: Response | any) => {
   }
 };
 
+
+export const fetchCompletedQuizzes = async (
+  req: any,
+  res: any
+) => {
+  try {
+    const completedQuizzes = await prisma.quiz.findMany({
+      where: {
+        status: "COMPLETED",
+      },
+      include: {
+        rounds: {
+          where: { roundNumber: 3 },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    const result = [];
+
+    for (const quiz of completedQuizzes) {
+      const thirdRound = quiz.rounds[0];
+
+      let winnerName: string | null = null;
+
+      if (thirdRound) {
+        const winnerAttempt = await prisma.roundAttempt.findFirst({
+          where: {
+            roundId: thirdRound.id,
+            qualified: true,
+          },
+          include: {
+            quizAttempt: {
+              include: { user: true },
+            },
+          },
+          orderBy: {
+            timeTaken: "asc",
+          },
+        });
+
+        winnerName = winnerAttempt?.quizAttempt.user.name || null;
+      }
+
+      result.push({
+        id: quiz.id,
+        title: quiz.title,
+        description: quiz.description,
+        completedAt: quiz.createdAt,
+        winnerName,
+      });
+    }
+
+    return res.status(200).json({
+      message: "Completed quizzes fetched successfully",
+      quizzes: result,
+    });
+
+  } catch (error) {
+    console.error("Fetch Completed Quizzes Error:", error);
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+};
+
+
 export const joinQuiz = async (req: Request | any, res: Response | any) => {
   try {
     const { quizId } = req.params;
@@ -58,10 +127,44 @@ export const joinQuiz = async (req: Request | any, res: Response | any) => {
     }
 
     if (quiz.status !== "LIVE") {
+      return res.status(400).json({ message: "Quiz is not live" });
+    }
+
+    const firstRound = await prisma.round.findFirst({
+      where: {
+        quizId,
+        roundNumber: 1,
+      },
+    });
+
+    if (!firstRound) {
       return res.status(400).json({
-        message: "Quiz is not live yet",
+        message: "First round not configured",
       });
     }
+
+    const firstRoundAttempt = await prisma.roundAttempt.findFirst({
+      where: {
+        roundId: firstRound.id,
+      },
+      orderBy: {
+        createdAt: "asc",
+      },
+    });
+
+    if (firstRoundAttempt) {
+      const now = new Date();
+      const startedAt = firstRoundAttempt.createdAt;
+      const timeLimitMs = firstRound.timeLimit * 60 * 1000;
+      const elapsedTime = now.getTime() - startedAt.getTime();
+
+      if (elapsedTime >= timeLimitMs) {
+        return res.status(403).json({
+          message: "Cannot join. First round already ended",
+        });
+      }
+    }
+
     const participantCount = await prisma.quizAttempt.count({
       where: { quizId },
     });
@@ -105,6 +208,7 @@ export const joinQuiz = async (req: Request | any, res: Response | any) => {
     });
   }
 };
+
 export const startQuizRound = async (
   req: Request | any,
   res: Response | any,
@@ -119,7 +223,6 @@ export const startQuizRound = async (
       return res.status(400).json({ message: "Invalid roundNumber" });
     }
 
-    // Check if user has joined the quiz
     const quizAttempt = await prisma.quizAttempt.findFirst({
       where: { quizId, userId },
     });
@@ -128,7 +231,6 @@ export const startQuizRound = async (
       return res.status(403).json({ message: "User has not joined quiz" });
     }
 
-    // Find the round
     const round = await prisma.round.findFirst({
       where: { quizId, roundNumber },
     });
@@ -137,7 +239,6 @@ export const startQuizRound = async (
       return res.status(404).json({ message: "Round not found for this quiz" });
     }
 
-    // Check if round attempt already exists
     const alreadyStarted = await prisma.roundAttempt.findFirst({
       where: { roundId: round.id, quizAttemptId: quizAttempt.id },
     });
@@ -234,7 +335,7 @@ export const getRoundStatus = async (req: Request | any, res: Response | any) =>
   const attempt = await prisma.roundAttempt.findFirst({
     where: {
       roundId,
-      quizAttempt: { userId }, // ✅ correct
+      quizAttempt: { userId },
     },
     select: { qualified: true },
   });
