@@ -13,8 +13,8 @@ const generateTokenAndSaveInCookies = (user: any, res:Response | any) => {
 
   res.cookie("jwt", token, {
     httpOnly: true,
-    secure: false,
-    sameSite: "lax",
+    secure: true,
+    sameSite: "None",
     path: "/",
     maxAge: 10 * 24 * 60 * 60 * 1000,
   });

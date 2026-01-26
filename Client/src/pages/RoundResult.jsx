@@ -46,7 +46,7 @@ const RoundResult = () => {
     const fetchRoundResult = async () => {
       try {
         const res = await axios.get(
-          `http://localhost:3000/user/roundresult/${roundId}`,
+          `https://quizsprint-fox0.onrender.com/user/roundresult/${roundId}`,
           { withCredentials: true }
         );
 
@@ -118,7 +118,7 @@ const RoundResult = () => {
     if (winner.userId === myStatus.userId) {
       axios
         .post(
-          `http://localhost:3000/user/markWinner/${quizId}`,
+          `https://quizsprint-fox0.onrender.com/user/markWinner/${quizId}`,
           {},
           { withCredentials: true }
         )

@@ -17,7 +17,7 @@ const Login = () => {
     }
     try {
       const response = await axios.post(
-        "http://localhost:3000/auth/login",
+        "https://quizsprint-fox0.onrender.com/auth/login",
         { email, password },
         {
           withCredentials: true,

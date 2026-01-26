@@ -22,9 +22,9 @@ const Dashboard = () => {
     setLoading(true);
     try {
       const [liveRes, draftRes, completedRes] = await Promise.all([
-        axios.get("http://localhost:3000/user/fetchQuizUserLive", { withCredentials: true }),
-        axios.get("http://localhost:3000/user/fetchQuizUserUpcoming", { withCredentials: true }),
-        axios.get("http://localhost:3000/user/fetchQuizUserCompleted", { withCredentials: true }),
+        axios.get("https://quizsprint-fox0.onrender.com/user/fetchQuizUserLive", { withCredentials: true }),
+        axios.get("https://quizsprint-fox0.onrender.com/user/fetchQuizUserUpcoming", { withCredentials: true }),
+        axios.get("https://quizsprint-fox0.onrender.com/user/fetchQuizUserCompleted", { withCredentials: true }),
       ]);
 
       setLiveQuizzes(liveRes.data.quiz || []);
@@ -49,7 +49,7 @@ const Dashboard = () => {
       setJoiningQuizId(quizId);
 
       const res = await axios.post(
-        `http://localhost:3000/user/joinQuiz/${quizId}`,
+        `https://quizsprint-fox0.onrender.com/user/joinQuiz/${quizId}`,
         {},
         { withCredentials: true }
       );
