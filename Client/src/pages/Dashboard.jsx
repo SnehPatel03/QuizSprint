@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
 import { Play, Calendar, Trophy, Zap, Crown, X } from "lucide-react";
-import Navbar from "../../../Server/src/Controllers/NavBar";
+import Navbar from "../components/Navbar";
 
 const Dashboard = () => {
   const [liveQuizzes, setLiveQuizzes] = useState([]);

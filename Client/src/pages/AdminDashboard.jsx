@@ -18,7 +18,7 @@ import PopUp from "../components/PopUp";
 import UpdatePopUp from "../components/UpdatePopUp.jsx";
 import SetQuePopUp from "../components/SetQuePopUp.jsx";
 import QuizInfoPopup from "../components/QuizInfoPopup.jsx";
-import Navbar from "../../../Server/src/Controllers/NavBar.jsx";
+import Navbar from "../components/Navbar.jsx";
 
 const AdminDashboard = () => {
   const [quizzes, setQuizzes] = useState([]);
