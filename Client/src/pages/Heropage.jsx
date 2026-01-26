@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {useNavigate} from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   Clock,
   Trophy,
@@ -118,14 +118,14 @@ export default function HeroPage() {
                 href="#leaderboard"
                 className="block text-slate-600 hover:text-blue-600 transition"
               >
-                Leaderboard
+                Login
               </a>
               {token ? (
                 <button
-                  onClick={() => handleNavigation("/dashboard")}
+                  onClick={() => handleNavigation("/login")}
                   className="w-full px-6 py-2 border-2 border-emerald-500 text-emerald-600 rounded-xl hover:bg-emerald-50 transition font-semibold"
                 >
-                  Go to Dashboard
+                  login
                 </button>
               ) : (
                 <button
@@ -432,7 +432,6 @@ export default function HeroPage() {
             >
               Start First Quiz
             </button>
-    
           </div>
         </div>
       </section>
