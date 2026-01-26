@@ -34,7 +34,7 @@ const PopUp = ({ onClose, onSuccess }) => {
 
     try {
       await axios.post(
-        "https://quizsprint-fox0.onrender.com/admin/quiz",
+        "http://localhost:3000/admin/quiz",
         {
           title: formData.title,
           description: formData.description,

@@ -24,7 +24,7 @@ function App() {
           element={<RoundPage />}
         />
          <Route
-          path="/quiz/:quizId/round/:roundNumber/result"
+          path="/user/quiz/:quizId/round/:roundNumber/:roundId"
           element={<RoundResult />}
         />
 

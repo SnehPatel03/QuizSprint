@@ -36,7 +36,6 @@ model Quiz {
   attempts        QuizAttempt[]
   rounds          Round[]
 }
-
 model Round {
   id              String         @id @default(uuid())
   quizId          String
@@ -48,10 +47,11 @@ model Round {
   questions       Question[]
   quiz            Quiz           @relation(fields: [quizId], references: [id], onDelete: Cascade)
   roundAttempts   RoundAttempt[]
-
+  
   @@unique([quizId, roundNumber])
 }
 enum RoundStatus {
+
   PENDING
   ACTIVE
   COMPLETED

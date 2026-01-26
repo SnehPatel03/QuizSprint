@@ -23,9 +23,15 @@ export default function HeroPage() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  const handleNavigation = (path) => {
+    setIsMenuOpen(false);
+    navigate(path);
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-cyan-50 text-slate-800 overflow-hidden">
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-cyan-50 text-slate-800 overflow-x-hidden">
+      {/* Background blobs */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10">
         <div className="absolute top-20 left-10 w-96 h-96 bg-blue-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse"></div>
         <div
           className="absolute top-40 right-10 w-96 h-96 bg-cyan-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse"
@@ -37,108 +43,44 @@ export default function HeroPage() {
         ></div>
       </div>
 
-      <nav
-        className={`fixed w-full z-50 transition-all duration-300 ${
-          scrollY > 50 ? "bg-white/80 backdrop-blur-lg shadow-sm" : ""
-        }`}
+     {/* Navbar */}
+<nav
+  className={`fixed w-full z-50 transition-all duration-300 ${
+    scrollY > 50 ? "bg-white/80 backdrop-blur-lg shadow-sm" : ""
+  }`}
+>
+  <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+    {/* Logo */}
+    <div className="flex items-center space-x-2">
+      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center shadow-lg">
+        <Zap className="w-6 h-6 text-white" />
+      </div>
+      <span className="text-2xl font-bold">
+        <span className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+          Quiz
+        </span>
+        <span className="text-slate-800 italic">Sprint</span>
+      </span>
+    </div>
+
+    {/* Login / Signup buttons always visible */}
+    {token ? (
+      <button
+        onClick={() => navigate("/login")}
+        className="px-6 py-2 border-2 border-emerald-500 text-emerald-600 rounded-xl hover:bg-emerald-50 transition font-semibold"
       >
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center shadow-lg">
-                <Zap className="w-6 h-6 text-white" />
-              </div>
-              <span className="text-2xl font-bold">
-                <span className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
-                  Quiz
-                </span>
-                <span className="text-slate-800 italic">Sprint</span>
-              </span>
-            </div>
-
-            <div className="hidden md:flex items-center space-x-8">
-              <a
-                href="#features"
-                className="text-slate-600 hover:text-blue-600 transition font-medium"
-              >
-                Features
-              </a>
-              <a
-                href="#how-it-works"
-                className="text-slate-600 hover:text-blue-600 transition font-medium"
-              >
-                How It Works
-              </a>
-              <a
-                href="#leaderboard"
-                className="text-slate-600 hover:text-blue-600 transition font-medium"
-              >
-                Leaderboard
-              </a>
-              {token ? (
-                <button
-                  onClick={() => navigate("/login")}
-                  className="px-6 py-2 border-2 border-emerald-500 text-emerald-600 rounded-xl hover:bg-emerald-50 transition font-semibold"
-                >
-                  Login
-                </button>
-              ) : (
-                <button
-                  onClick={() => navigate("/signup")}
-                  className="px-6 py-2 border-2 border-blue-500 text-blue-600 rounded-xl hover:bg-blue-50 transition font-semibold"
-                >
-                  Register
-                </button>
-              )}
-            </div>
-
-            <button
-              className="md:hidden text-slate-600"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-            >
-              {isMenuOpen ? <X /> : <Menu />}
-            </button>
-          </div>
-
-          {isMenuOpen && (
-            <div className="md:hidden mt-4 pb-4 space-y-4">
-              <a
-                href="#features"
-                className="block text-slate-600 hover:text-blue-600 transition"
-              >
-                Features
-              </a>
-              <a
-                href="#how-it-works"
-                className="block text-slate-600 hover:text-blue-600 transition"
-              >
-                How It Works
-              </a>
-              <a
-                href="#leaderboard"
-                className="block text-slate-600 hover:text-blue-600 transition"
-              >
-                Login
-              </a>
-              {token ? (
-                <button
-                  onClick={() => handleNavigation("/login")}
-                  className="w-full px-6 py-2 border-2 border-emerald-500 text-emerald-600 rounded-xl hover:bg-emerald-50 transition font-semibold"
-                >
-                  login
-                </button>
-              ) : (
-                <button
-                  onClick={() => handleNavigation("/signup")}
-                  className="w-full px-6 py-2 border-2 border-blue-500 text-blue-600 rounded-xl hover:bg-blue-50 transition font-semibold"
-                >
-                  Sign In
-                </button>
-              )}
-            </div>
-          )}
-        </div>
-      </nav>
+        Login
+      </button>
+    ) : (
+      <button
+        onClick={() => navigate("/signup")}
+        className="px-6 py-2 border-2 border-blue-500 text-blue-600 rounded-xl hover:bg-blue-50 transition font-semibold"
+      >
+        Register
+      </button>
+    )}
+  </div>
+</nav>
 
       <section className="relative pt-32 pb-20 px-6">
         <div className="max-w-7xl mx-auto">
@@ -346,7 +288,6 @@ export default function HeroPage() {
         </div>
       </section>
 
-      {/* How It Works */}
       <section
         id="how-it-works"
         className="relative py-20 px-6 bg-gradient-to-b from-white to-blue-50"
@@ -409,7 +350,6 @@ export default function HeroPage() {
         </div>
       </section>
 
-      {/* CTA Section */}
       <section className="relative py-32 px-6">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-5xl md:text-6xl font-bold mb-6 text-slate-900">

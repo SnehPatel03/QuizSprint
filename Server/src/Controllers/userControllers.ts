@@ -44,11 +44,7 @@ export const getAllQuizUserLive = async (req: Request, res: Response | any) => {
   }
 };
 
-
-export const fetchCompletedQuizzes = async (
-  req: any,
-  res: any
-) => {
+export const fetchCompletedQuizzes = async (req: any, res: any) => {
   try {
     const completedQuizzes = await prisma.quiz.findMany({
       where: {
@@ -84,7 +80,6 @@ export const fetchCompletedQuizzes = async (
       message: "Completed quizzes fetched successfully",
       quiz: result,
     });
-
   } catch (error) {
     console.error("Fetch Completed Quizzes Error:", error);
     return res.status(500).json({
@@ -189,7 +184,6 @@ export const joinQuiz = async (req: Request | any, res: Response | any) => {
   }
 };
 
-
 export const startQuizRound = async (
   req: Request | any,
   res: Response | any,
@@ -238,8 +232,8 @@ export const startQuizRound = async (
         });
 
         if (!previousRoundAttempt || !previousRoundAttempt.qualified) {
-          return res.status(403).json({ 
-            message: "You are not qualified for this round" 
+          return res.status(403).json({
+            message: "You are not qualified for this round",
           });
         }
 
@@ -257,13 +251,15 @@ export const startQuizRound = async (
 
         if (previousRoundAnswers.length > 0) {
           const lastAnswerTime = new Date(previousRoundAnswers[0].createdAt);
-          const bufferEndTime = new Date(lastAnswerTime.getTime() + BUFFER_TIME_MS);
+          const bufferEndTime = new Date(
+            lastAnswerTime.getTime() + BUFFER_TIME_MS,
+          );
           const now = new Date();
 
           if (now < bufferEndTime) {
             const remainingMs = bufferEndTime.getTime() - now.getTime();
             const remainingMinutes = Math.ceil(remainingMs / 60000);
-            return res.status(403).json({ 
+            return res.status(403).json({
               message: `Next round will start in ${remainingMinutes} minute(s). Please wait.`,
               bufferTimeRemaining: remainingMs,
             });
@@ -358,11 +354,7 @@ export const submitRound = async (req: Request | any, res: Response | any) => {
   }
 };
 
-
-export const getRoundResult = async (
-  req: Request | any,
-  res: Response | any
-) => {
+export const getRoundResult = async (req: any, res: any) => {
   try {
     const { roundId } = req.params;
     const userId = req.user.id;
@@ -376,99 +368,100 @@ export const getRoundResult = async (
             answers: true,
           },
         },
+        quiz: true,
       },
     });
 
-    if (!round) {
-      return res.status(404).json({
-        message: "Round not found",
-      });
+    if (!round) return res.status(404).json({ message: "Round not found" });
+
+    const now = Date.now();
+    const roundEndTime = new Date(round.createdAt).getTime() + round.timeLimit * 1000;
+    const roundOngoing = now < roundEndTime;
+    const roundTimeRemaining = Math.max(0, roundEndTime - now);
+
+
+    let leaderboard = [];
+    let myStatus = null;
+    let bufferTimeRemaining = 0;
+    let canStartNextRound = false;
+
+    if (!roundOngoing) {
+      // Build leaderboard
+      leaderboard = round.roundAttempts
+        .map((attempt) => ({
+          userId: attempt.quizAttempt.userId,
+          name: attempt.quizAttempt.user.name,
+          correctScore: attempt.answers.filter((a) => a.isCorrect).length,
+          timeTaken: attempt.timeTaken,
+          qualified: attempt.qualified,
+        }))
+        .sort((a, b) => {
+          if (b.correctScore !== a.correctScore) return b.correctScore - a.correctScore;
+          return a.timeTaken - b.timeTaken;
+        });
+
+      myStatus = leaderboard.find((u) => u.userId === userId);
+
+      // Buffer time after round
+      const MIN_BUFFER_MS = 2 * 60 * 1000; // 2 minutes
+      bufferTimeRemaining = MIN_BUFFER_MS;
     }
-
-    const leaderboard = round.roundAttempts
-      .map((attempt) => ({
-        userId: attempt.quizAttempt.userId,
-        name: attempt.quizAttempt.user.name,
-        correctScore: attempt.answers.filter(a => a.isCorrect).length,
-        timeTaken: attempt.timeTaken,
-        qualified: attempt.qualified,
-      }))
-      .sort((a, b) =>
-        b.correctScore !== a.correctScore
-          ? b.correctScore - a.correctScore
-          : a.timeTaken - b.timeTaken
-      );
-
-    const myStatus = leaderboard.find(
-      (u) => u.userId === userId
-    );
-
-    const buffer = roundBufferMap.get(roundId);
-    const bufferTimeRemaining = buffer
-      ? Math.max(0, buffer.bufferEndTime - Date.now())
-      : 0;
 
     return res.status(200).json({
       roundNumber: round.roundNumber,
+      roundOngoing,
+      roundTimeRemaining,
       leaderboard,
       myStatus,
       bufferTimeRemaining,
-      canStartNextRound: bufferTimeRemaining === 0,
+      canStartNextRound,
       isFinalRound: round.roundNumber === 3,
     });
-  } catch (error) {
-    console.error("Round Result Error:", error);
-    return res.status(500).json({
-      message: "Internal server error",
-    });
+  } catch (err) {
+    console.error("Round Result Error:", err);
+    return res.status(500).json({ message: "Internal server error" });
   }
 };
 
-/* ============================ MARK WINNER =========================== */
-export const markWinner = async (
-  req: Request | any,
-  res: Response | any
-) => {
+
+
+// ---------------- MARK WINNER ----------------
+export const markWinner = async (req: Request | any, res: Response | any) => {
   try {
     const { quizId } = req.params;
     const userId = req.user.id;
 
     const finalRound = await prisma.round.findFirst({
-      where: {
-        quizId,
-        roundNumber: 3,
-      },
+      where: { quizId, roundNumber: 3 },
       include: {
-        roundAttempts: {
-          include: {
-            quizAttempt: true,
-            answers: true,
-          },
-        },
+        roundAttempts: { include: { quizAttempt: true, answers: true } },
       },
     });
 
-    if (!finalRound) {
-      return res.status(400).json({
-        message: "Final round not found",
-      });
-    }
+    if (!finalRound)
+      return res.status(400).json({ message: "Final round not found" });
+
+    const existingWinner = await prisma.quizAttempt.findFirst({
+      where: { quizId, isWinner: true },
+    });
+
+    if (existingWinner)
+      return res.status(400).json({ message: "Winner already declared" });
 
     const leaderboard = finalRound.roundAttempts
-      .map((a) => ({
-        userId: a.quizAttempt.userId,
-        score: a.answers.filter(x => x.isCorrect).length,
-        time: a.timeTaken,
+      .map((attempt) => ({
+        userId: attempt.quizAttempt.userId,
+        correctScore: attempt.answers.filter((a) => a.isCorrect).length,
+        timeTaken: attempt.timeTaken,
       }))
-      .sort((a, b) =>
-        b.score !== a.score ? b.score - a.score : a.time - b.time
-      );
-
-    if (!leaderboard.length || leaderboard[0].userId !== userId) {
-      return res.status(403).json({
-        message: "Only top scorer can be winner",
+      .sort((a, b) => {
+        if (b.correctScore !== a.correctScore)
+          return b.correctScore - a.correctScore;
+        return a.timeTaken - b.timeTaken;
       });
-    }
+
+    if (!leaderboard.length || leaderboard[0].userId !== userId)
+      return res.status(403).json({ message: "Only top scorer can be winner" });
 
     await prisma.quizAttempt.updateMany({
       where: { quizId, userId },
@@ -480,13 +473,9 @@ export const markWinner = async (
       data: { status: "COMPLETED" },
     });
 
-    return res.status(200).json({
-      message: "Winner declared successfully 🎉",
-    });
-  } catch (error) {
-    console.error("Mark Winner Error:", error);
-    return res.status(500).json({
-      message: "Internal server error",
-    });
+    return res.status(200).json({ message: "Winner declared successfully 🎉" });
+  } catch (err) {
+    console.error("Mark Winner Error:", err);
+    return res.status(500).json({ message: "Internal server error" });
   }
 };

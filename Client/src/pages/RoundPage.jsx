@@ -23,7 +23,7 @@
           setLoading(true);
 
           const res = await axios.post(
-            `https://quizsprint-fox0.onrender.com/user/startRound/${quizId}/${roundNumber}`,
+            `http://localhost:3000/user/startRound/${quizId}/${roundNumber}`,
             {},
             { withCredentials: true }
           );
@@ -77,14 +77,14 @@
         };
 
         await axios.post(
-          `https://quizsprint-fox0.onrender.com/user/submitRound/${roundId}`,
+          `http://localhost:3000/user/submitRound/${roundId}`,
+          
           payload,
           { withCredentials: true }
         );
 
         toast.success(auto ? "Time up! Submitted" : "Round submitted");
-
-        navigate(`/quiz/${quizId}/round/${roundNumber}/result`, {
+        navigate(`/user/quiz/${quizId}/round/${roundNumber}/${roundId}`, {
           state: { roundId },
         });
       } catch (err) {

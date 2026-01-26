@@ -34,7 +34,7 @@ const AdminDashboard = () => {
   const fetchQuizzes = async () => {
     try {
       setLoading(true);
-      const res = await axios.get("https://quizsprint-fox0.onrender.com/admin/fetchQuiz", {
+      const res = await axios.get("http://localhost:3000/admin/fetchQuiz", {
         withCredentials: true,
       });
 
@@ -78,7 +78,7 @@ const AdminDashboard = () => {
       setDeleting(true);
       try {
         await axios.delete(
-          `https://quizsprint-fox0.onrender.com/admin/deleteQuiz/${quiz.id}`,
+          `http://localhost:3000/admin/deleteQuiz/${quiz.id}`,
           { withCredentials: true }
         );
         setQuizzes((prev) => prev.filter((q) => q.id !== quiz.id));

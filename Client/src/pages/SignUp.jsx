@@ -19,7 +19,7 @@ const SignUp = () => {
 
     try {
       const response = await axios.post(
-        "https://quizsprint-fox0.onrender.com/auth/signup",
+        "http://localhost:3000/auth/signup",
         {
           name,
           email,

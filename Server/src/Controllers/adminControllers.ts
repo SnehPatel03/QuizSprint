@@ -23,9 +23,9 @@ const roundSchema = z.object({
   maxParticipants: z.number().min(1),
   round2Players: z.number().min(1),
   round3Players: z.number().min(1),
-  timeLimit1:z.number(),
-  timeLimit2:z.number(),
-  timeLimit3:z.number()
+  timeLimit1: z.number(),
+  timeLimit2: z.number(),
+  timeLimit3: z.number(),
 });
 
 export const createQuiz = async (req: any, res: Response<QuizResponse>) => {
@@ -35,7 +35,7 @@ export const createQuiz = async (req: any, res: Response<QuizResponse>) => {
     if (!parsed.success) {
       return res.status(400).json({
         message: "Validation failed",
-        quiz: parsed.error.issues.map(i => i.message),
+        quiz: parsed.error.issues.map((i) => i.message),
       });
     }
 
@@ -83,7 +83,7 @@ export const createQuiz = async (req: any, res: Response<QuizResponse>) => {
       },
       include: { rounds: true },
     });
-
+    console.log("created quiz", quiz);
     return res.status(201).json({
       message: "Quiz created successfully",
       quiz,
@@ -95,7 +95,6 @@ export const createQuiz = async (req: any, res: Response<QuizResponse>) => {
     });
   }
 };
-
 
 export const getAllQuiz = async (req: Request | any, res: Response) => {
   try {
@@ -137,7 +136,7 @@ export const getAllQuiz = async (req: Request | any, res: Response) => {
   }
 };
 
-export const updateQuiz = async (req:any, res:any) => {
+export const updateQuiz = async (req: any, res: any) => {
   try {
     const { id } = req.params;
 
@@ -195,21 +194,20 @@ export const updateQuiz = async (req:any, res:any) => {
   }
 };
 
-
 export const deleteQuiz = async (
   req: Request<{ id: string }>,
   res: Response<QuizResponse>,
 ) => {
   try {
-      await prisma.quiz.delete({
-        where: { id: req.params.id },
-      });
+    await prisma.quiz.delete({
+      where: { id: req.params.id },
+    });
 
-      return res.status(200).json({
-        message: "Quiz deleted successfully",
-      });
-    } catch (error) {
-      console.error("Delete Quiz Error:", error);
-      return res.status(500).json({ message: "Error deleting quiz" });
-    }
+    return res.status(200).json({
+      message: "Quiz deleted successfully",
+    });
+  } catch (error) {
+    console.error("Delete Quiz Error:", error);
+    return res.status(500).json({ message: "Error deleting quiz" });
+  }
 };
