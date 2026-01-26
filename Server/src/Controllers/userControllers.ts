@@ -359,7 +359,10 @@ export const submitRound = async (req: Request | any, res: Response | any) => {
 };
 
 
-export const getRoundResult = async (req: Request | any, res: Response | any) => {
+export const getRoundResult = async (
+  req: Request | any,
+  res: Response | any
+) => {
   try {
     const { roundId } = req.params;
     const userId = req.user.id;
@@ -369,86 +372,67 @@ export const getRoundResult = async (req: Request | any, res: Response | any) =>
       include: {
         roundAttempts: {
           include: {
-            quizAttempt: {
-              include: { user: true },
-            },
+            quizAttempt: { include: { user: true } },
             answers: true,
           },
         },
-        quiz: true,
       },
     });
 
     if (!round) {
-      return res.status(404).json({ message: "Round not found" });
+      return res.status(404).json({
+        message: "Round not found",
+      });
     }
 
     const leaderboard = round.roundAttempts
       .map((attempt) => ({
         userId: attempt.quizAttempt.userId,
         name: attempt.quizAttempt.user.name,
-        correctScore: attempt.answers.filter((a) => a.isCorrect).length,
+        correctScore: attempt.answers.filter(a => a.isCorrect).length,
         timeTaken: attempt.timeTaken,
         qualified: attempt.qualified,
       }))
-      .sort((a, b) => {
-        if (b.correctScore !== a.correctScore)
-          return b.correctScore - a.correctScore;
-        return a.timeTaken - b.timeTaken;
-      });
+      .sort((a, b) =>
+        b.correctScore !== a.correctScore
+          ? b.correctScore - a.correctScore
+          : a.timeTaken - b.timeTaken
+      );
 
-    const myStatus = leaderboard.find((u) => u.userId === userId);
+    const myStatus = leaderboard.find(
+      (u) => u.userId === userId
+    );
 
-    // Calculate buffer time (5 minutes = 300000 ms)
-    const BUFFER_TIME_MS = 5 * 60 * 1000;
-    const now = new Date();
-    let bufferTimeRemaining = 0;
-    let canStartNextRound = false;
-
-    // If round is completed and not final round, calculate buffer time
-    if (round.status === "COMPLETED" && round.roundNumber < 3) {
-      // Get the most recent answer submission time as round completion time
-      // Find the latest answer submission across all attempts
-      let lastAnswerTime = null;
-      for (const attempt of round.roundAttempts) {
-        for (const answer of attempt.answers) {
-          const answerTime = new Date(answer.createdAt).getTime();
-          if (!lastAnswerTime || answerTime > lastAnswerTime) {
-            lastAnswerTime = answerTime;
-          }
-        }
-      }
-      
-      // If no answers found, use round creation time (shouldn't happen for completed rounds)
-      if (!lastAnswerTime) {
-        lastAnswerTime = new Date(round.createdAt).getTime();
-      }
-      
-      const bufferEndTime = lastAnswerTime + BUFFER_TIME_MS;
-      bufferTimeRemaining = Math.max(0, bufferEndTime - now.getTime());
-      canStartNextRound = bufferTimeRemaining === 0;
-    }
+    const buffer = roundBufferMap.get(roundId);
+    const bufferTimeRemaining = buffer
+      ? Math.max(0, buffer.bufferEndTime - Date.now())
+      : 0;
 
     return res.status(200).json({
       roundNumber: round.roundNumber,
       leaderboard,
       myStatus,
       bufferTimeRemaining,
-      canStartNextRound,
+      canStartNextRound: bufferTimeRemaining === 0,
       isFinalRound: round.roundNumber === 3,
     });
-  } catch (err) {
-    console.error("Round Result Error:", err);
-    return res.status(500).json({ message: "Internal server error" });
+  } catch (error) {
+    console.error("Round Result Error:", error);
+    return res.status(500).json({
+      message: "Internal server error",
+    });
   }
 };
 
-export const markWinner = async (req: Request | any, res: Response | any) => {
+/* ============================ MARK WINNER =========================== */
+export const markWinner = async (
+  req: Request | any,
+  res: Response | any
+) => {
   try {
     const { quizId } = req.params;
     const userId = req.user.id;
 
-    // 1. Get round 3
     const finalRound = await prisma.round.findFirst({
       where: {
         quizId,
@@ -465,52 +449,32 @@ export const markWinner = async (req: Request | any, res: Response | any) => {
     });
 
     if (!finalRound) {
-      return res.status(400).json({ message: "Final round not found" });
-    }
-
-    // 2. Check if winner already exists
-    const existingWinner = await prisma.quizAttempt.findFirst({
-      where: {
-        quizId,
-        isWinner: true,
-      },
-    });
-
-    if (existingWinner) {
-      return res.status(400).json({ message: "Winner already declared" });
-    }
-
-    // 3. Build leaderboard
-    const leaderboard = finalRound.roundAttempts
-      .map((attempt) => ({
-        userId: attempt.quizAttempt.userId,
-        correctScore: attempt.answers.filter(a => a.isCorrect).length,
-        timeTaken: attempt.timeTaken,
-      }))
-      .sort((a, b) => {
-        if (b.correctScore !== a.correctScore) {
-          return b.correctScore - a.correctScore;
-        }
-        return a.timeTaken - b.timeTaken;
+      return res.status(400).json({
+        message: "Final round not found",
       });
-
-    // 4. Check if current user is rank 1
-    if (!leaderboard.length || leaderboard[0].userId !== userId) {
-      return res.status(403).json({ message: "Only top scorer can be winner" });
     }
 
-    // 5. Mark winner
+    const leaderboard = finalRound.roundAttempts
+      .map((a) => ({
+        userId: a.quizAttempt.userId,
+        score: a.answers.filter(x => x.isCorrect).length,
+        time: a.timeTaken,
+      }))
+      .sort((a, b) =>
+        b.score !== a.score ? b.score - a.score : a.time - b.time
+      );
+
+    if (!leaderboard.length || leaderboard[0].userId !== userId) {
+      return res.status(403).json({
+        message: "Only top scorer can be winner",
+      });
+    }
+
     await prisma.quizAttempt.updateMany({
-      where: {
-        quizId,
-        userId,
-      },
-      data: {
-        isWinner: true,
-      },
+      where: { quizId, userId },
+      data: { isWinner: true },
     });
 
-    // 6. Mark quiz as COMPLETED
     await prisma.quiz.update({
       where: { id: quizId },
       data: { status: "COMPLETED" },
@@ -519,8 +483,10 @@ export const markWinner = async (req: Request | any, res: Response | any) => {
     return res.status(200).json({
       message: "Winner declared successfully 🎉",
     });
-  } catch (err) {
-    console.error("Mark Winner Error:", err);
-    return res.status(500).json({ message: "Internal server error" });
+  } catch (error) {
+    console.error("Mark Winner Error:", error);
+    return res.status(500).json({
+      message: "Internal server error",
+    });
   }
 };

@@ -153,7 +153,6 @@ export const updateQuiz = async (req:any, res:any) => {
       timeLimit3,
     } = req.body;
 
-    // 1️⃣ Update Quiz basic info
     const quiz = await prisma.quiz.update({
       where: { id },
       data: {

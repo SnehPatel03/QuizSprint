@@ -88,7 +88,7 @@ const Dashboard = () => {
   const closePopup = () =>
     setPopup({ show: false, message: "", success: false, quizId: null });
 
-  // ================= QUIZ CARD =================
+
   const QuizCard = ({ quiz, status }) => (
     <div className="relative bg-white/80 backdrop-blur-xl rounded-2xl p-5 border border-slate-200 shadow hover:shadow-xl transition flex flex-col justify-between min-h-[180px]">
       <div>
