@@ -111,8 +111,6 @@ export const fetchCompletedQuizzes = async (
     });
   }
 };
-
-
 export const joinQuiz = async (req: Request | any, res: Response | any) => {
   try {
     const { quizId } = req.params;
@@ -126,7 +124,8 @@ export const joinQuiz = async (req: Request | any, res: Response | any) => {
       return res.status(404).json({ message: "Quiz not found" });
     }
 
-    if (quiz.status !== "LIVE") {
+    // ✅ Normalize status
+    if (quiz.status?.trim().toUpperCase() !== "LIVE") {
       return res.status(400).json({ message: "Quiz is not live" });
     }
 
@@ -209,6 +208,7 @@ export const joinQuiz = async (req: Request | any, res: Response | any) => {
   }
 };
 
+
 export const startQuizRound = async (
   req: Request | any,
   res: Response | any,
@@ -216,7 +216,7 @@ export const startQuizRound = async (
   try {
     const { quizId, roundNumber: roundNumberStr } = req.params;
     const userId = req.user.id;
-    console.log("req", req.params);
+
     const roundNumber = Number(roundNumberStr);
 
     if (isNaN(roundNumber)) {
@@ -263,6 +263,7 @@ export const startQuizRound = async (
     return res.status(201).json({
       roundId: round.id,
       roundNumber: round.roundNumber,
+      timeLimit: round.timeLimit,
       questions,
     });
   } catch (err) {
@@ -315,35 +316,138 @@ export const submitRound = async (req: Request | any, res: Response | any) => {
       where: { id: roundAttempt.id },
       data: { timeTaken },
     });
+    await calculateRoundQualification(roundId);
 
     return res.status(200).json({ message: "Answers submitted successfully" });
-    calculateRoundQualification(roundId);
   } catch (error) {
     console.error("Submit Round Error:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 };
 
-export const getRoundStatus = async (req: Request | any, res: Response | any) => {
-  const { roundId } = req.params;
-  const userId = req.user.id;
 
-  if (!userId) {
-    return res.status(404).json({ message: "User not found" });
+export const getRoundResult = async (req: Request | any, res: Response | any) => {
+  try {
+    const { roundId } = req.params;
+    const userId = req.user.id;
+
+    const round = await prisma.round.findUnique({
+      where: { id: roundId },
+      include: {
+        roundAttempts: {
+          include: {
+            quizAttempt: {
+              include: { user: true },
+            },
+            answers: true,
+          },
+        },
+      },
+    });
+
+    if (!round) {
+      return res.status(404).json({ message: "Round not found" });
+    }
+
+    const leaderboard = round.roundAttempts
+      .map((attempt) => ({
+        userId: attempt.quizAttempt.userId,
+        name: attempt.quizAttempt.user.name,
+        correctScore: attempt.answers.filter((a) => a.isCorrect).length,
+        timeTaken: attempt.timeTaken,
+        qualified: attempt.qualified,
+      }))
+      .sort((a, b) => {
+        if (b.correctScore !== a.correctScore)
+          return b.correctScore - a.correctScore;
+        return a.timeTaken - b.timeTaken;
+      });
+
+    const myStatus = leaderboard.find((u) => u.userId === userId);
+
+    return res.status(200).json({
+      roundNumber: round.roundNumber,
+      leaderboard,
+      myStatus,
+    });
+  } catch (err) {
+    console.error("Round Result Error:", err);
+    return res.status(500).json({ message: "Internal server error" });
   }
-
-  const attempt = await prisma.roundAttempt.findFirst({
-    where: {
-      roundId,
-      quizAttempt: { userId },
-    },
-    select: { qualified: true },
-  });
-
-  if (!attempt) {
-    return res.status(404).json({ message: "Attempt not found" });
-  }
-
-  return res.json({ status: attempt.qualified ? "QUALIFIED" : "ELIMINATED" });
 };
 
+export const markWinner = async (req: Request | any, res: Response | any) => {
+  try {
+    const { quizId } = req.params;
+    const userId = req.user.id;
+
+    // 1. Get round 3
+    const finalRound = await prisma.round.findFirst({
+      where: {
+        quizId,
+        roundNumber: 3,
+      },
+      include: {
+        roundAttempts: {
+          include: {
+            quizAttempt: true,
+            answers: true,
+          },
+        },
+      },
+    });
+
+    if (!finalRound) {
+      return res.status(400).json({ message: "Final round not found" });
+    }
+
+    // 2. Check if winner already exists
+    const existingWinner = await prisma.quizAttempt.findFirst({
+      where: {
+        quizId,
+        isWinner: true,
+      },
+    });
+
+    if (existingWinner) {
+      return res.status(400).json({ message: "Winner already declared" });
+    }
+
+    // 3. Build leaderboard
+    const leaderboard = finalRound.roundAttempts
+      .map((attempt) => ({
+        userId: attempt.quizAttempt.userId,
+        correctScore: attempt.answers.filter(a => a.isCorrect).length,
+        timeTaken: attempt.timeTaken,
+      }))
+      .sort((a, b) => {
+        if (b.correctScore !== a.correctScore) {
+          return b.correctScore - a.correctScore;
+        }
+        return a.timeTaken - b.timeTaken;
+      });
+
+    // 4. Check if current user is rank 1
+    if (!leaderboard.length || leaderboard[0].userId !== userId) {
+      return res.status(403).json({ message: "Only top scorer can be winner" });
+    }
+
+    // 5. Mark winner
+    await prisma.quizAttempt.updateMany({
+      where: {
+        quizId,
+        userId,
+      },
+      data: {
+        isWinner: true,
+      },
+    });
+
+    return res.status(200).json({
+      message: "Winner declared successfully 🎉",
+    });
+  } catch (err) {
+    console.error("Mark Winner Error:", err);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};

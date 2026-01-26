@@ -15,7 +15,6 @@ const userSchema = z.object({
     .string()
     .min(8, { message: "Password must contain atleast 8 character" }),
 });
-
 export const signup = async (req: Request, res: Response) => {
   try {
     const { email, name, role, password } = req.body || {};
@@ -24,16 +23,11 @@ export const signup = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "Enter all credentials" });
     }
 
-    if (!role) {
-      return res.status(400).json({ message: "Choose the Proper Role" });
-    }
-
-    if (!["USER", "ADMIN"].includes(role)) {
-      return res.status(400).json({ message: "Choose a Valid Role" });
+    if (!role || !["USER", "ADMIN"].includes(role)) {
+      return res.status(400).json({ message: "Choose a valid role" });
     }
 
     const validate = userSchema.safeParse({ email, name, password });
-
     if (!validate.success) {
       const errorMessage = validate.error.issues.map((err) => err.message);
       return res.status(400).json({ error: errorMessage });
@@ -48,7 +42,8 @@ export const signup = async (req: Request, res: Response) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    await prisma.user.create({
+
+    const user = await prisma.user.create({
       data: {
         email,
         name,
@@ -56,10 +51,18 @@ export const signup = async (req: Request, res: Response) => {
         password: hashedPassword,
       },
     });
-    res.status(201).json({ message: "User created successfully" });
+
+    const token = generateTokenAndSaveInCookies(user, res);
+    return res.status(201).json({
+      message: "Signup successful",
+      role: user.role,
+      name: user.name,
+      user,
+      token,
+    });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Error in Sign up functionality" });
+    return res.status(500).json({ message: "Error in signup" });
   }
 };
 
@@ -85,11 +88,15 @@ export const login = async (req: Request, res: Response) => {
   res.json({
     message: "Login successful",
     role: user.role,
+    name: user.name,
     user,
     token,
   });
 };
 
-export const logout = (req: Request, res: Response) => {
-  console.log("logout");
+export const logout = async (req: any, res: any) => {
+  return res.status(200).json({
+    message: "Logged out successfully",
+  });
 };
+//Handled on frontend Side

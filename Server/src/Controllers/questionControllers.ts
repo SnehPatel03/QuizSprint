@@ -1,69 +1,93 @@
 import { Request, Response } from "express";
 import { prisma } from "../lib/prisma";
-import { z } from "zod";
+import { string, z } from "zod";
 
 const optionSchema = z.object({
   text: z.string().min(1, "Option text is required"),
   isCorrect: z.boolean(),
 });
 
-const createQuestionSchema = z.object({
-  quizId: z.string().uuid("Invalid quiz ID"),
-  roundNumber: z.number().int().min(1).max(3),
+const questionSchema = z.object({
   text: z.string().min(5, "Question must be at least 5 characters"),
   options: z.array(optionSchema).min(2, "Minimum 2 options required"),
 });
 
-export const createQuestion = async (req: Request, res: Response) => {
+const bulkSchema = z.object({
+  rounds: z.array(
+    z.object({
+      questions: z.array(questionSchema).min(1),
+    })
+  ).min(1),
+});
+
+export const createQuestionfor1 = async (
+  req: Request<{ quizId: string }>,
+  res: Response
+) => {
   try {
-    const parsed = createQuestionSchema.safeParse(req.body);
-    const quizId = req.params;
+    const { quizId } = req.params;
+
+    if (!quizId) {
+      return res.status(400).json({ message: "Quiz ID is required" });
+    }
+
+    const parsed = bulkSchema.safeParse(req.body);
+
     if (!parsed.success) {
       return res.status(400).json({
         message: "Validation failed",
-        errors: parsed.error.issues.map((i) => i.message),
+        errors: parsed.error.issues.map(i => i.message),
       });
     }
 
-    const { roundNumber, text, options } = parsed.data;
-    const hasCorrectOption = options.some((o) => o.isCorrect);
+    const ROUND_NUMBER = 1;
 
-    if (!hasCorrectOption) {
-      return res.status(400).json({
-        message: "At least one option must be marked as correct",
-      });
-    }
+    // ✅ Find round 1
     const round = await prisma.round.findFirst({
       where: {
         quizId,
-        roundNumber,
+        roundNumber: ROUND_NUMBER,
       },
     });
 
     if (!round) {
       return res.status(404).json({
-        message: `Round ${roundNumber} not found f
-        or this quiz`,
+        message: `Round ${ROUND_NUMBER} not found for this quiz`,
       });
     }
 
-    const question = await prisma.question.create({
-      data: {
-        text,
-        roundId: round.id,
-        options: {
-          create: options,
+    // 👉 Take questions from first round only
+    const questions = parsed.data.rounds[0].questions;
+
+    const createdQuestions = [];
+
+    for (const q of questions) {
+      // ✅ Validate correct option
+      if (!q.options.some(o => o.isCorrect)) {
+        return res.status(400).json({
+          message: `Question "${q.text}" must have at least one correct option`,
+        });
+      }
+
+      const question = await prisma.question.create({
+        data: {
+          text: q.text,
+          roundId: round.id,
+          options: {
+            create: q.options,
+          },
         },
-      },
-      include: {
-        options: true,
-      },
-    });
+        include: { options: true },
+      });
+
+      createdQuestions.push(question);
+    }
 
     return res.status(201).json({
-      message: "Question created successfully",
-      question,
+      message: "Questions created successfully for Round 1",
+      questions: createdQuestions,
     });
+
   } catch (error) {
     console.error("Create Question Error:", error);
     return res.status(500).json({
@@ -71,6 +95,159 @@ export const createQuestion = async (req: Request, res: Response) => {
     });
   }
 };
+
+export const createQuestionfor2 = async (
+  req: Request<{ quizId: string }>,
+  res: Response
+) => {
+  try {
+    const { quizId } = req.params;
+
+    if (!quizId) {
+      return res.status(400).json({ message: "Quiz ID is required" });
+    }
+
+    const parsed = bulkSchema.safeParse(req.body);
+
+    if (!parsed.success) {
+      return res.status(400).json({
+        message: "Validation failed",
+        errors: parsed.error.issues.map(i => i.message),
+      });
+    }
+
+    const ROUND_NUMBER = 2;
+
+    const round = await prisma.round.findFirst({
+      where: {
+        quizId,
+        roundNumber: ROUND_NUMBER,
+      },
+    });
+
+    if (!round) {
+      return res.status(404).json({
+        message: `Round ${ROUND_NUMBER} not found for this quiz`,
+      });
+    }
+
+    // 👉 Take questions from first round only
+    const questions = parsed.data.rounds[0].questions;
+
+    const createdQuestions = [];
+
+    for (const q of questions) {
+      // ✅ Validate correct option
+      if (!q.options.some(o => o.isCorrect)) {
+        return res.status(400).json({
+          message: `Question "${q.text}" must have at least one correct option`,
+        });
+      }
+
+      const question = await prisma.question.create({
+        data: {
+          text: q.text,
+          roundId: round.id,
+          options: {
+            create: q.options,
+          },
+        },
+        include: { options: true },
+      });
+
+      createdQuestions.push(question);
+    }
+
+    return res.status(201).json({
+      message: "Questions created successfully for Round 1",
+      questions: createdQuestions,
+    });
+
+  } catch (error) {
+    console.error("Create Question Error:", error);
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+};
+
+export const createQuestionfor3 = async (
+  req: Request<{ quizId: string }>,
+  res: Response
+) => {
+  try {
+    const { quizId } = req.params;
+
+    if (!quizId) {
+      return res.status(400).json({ message: "Quiz ID is required" });
+    }
+
+    const parsed = bulkSchema.safeParse(req.body);
+
+    if (!parsed.success) {
+      return res.status(400).json({
+        message: "Validation failed",
+        errors: parsed.error.issues.map(i => i.message),
+      });
+    }
+
+    const ROUND_NUMBER = 3;
+
+    const round = await prisma.round.findFirst({
+      where: {
+        quizId,
+        roundNumber: ROUND_NUMBER,
+      },
+    });
+
+    if (!round) {
+      return res.status(404).json({
+        message: `Round ${ROUND_NUMBER} not found for this quiz`,
+      });
+    }
+
+    // 👉 Take questions from first round only
+    const questions = parsed.data.rounds[0].questions;
+
+    const createdQuestions = [];
+
+    for (const q of questions) {
+      // ✅ Validate correct option
+      if (!q.options.some(o => o.isCorrect)) {
+        return res.status(400).json({
+          message: `Question "${q.text}" must have at least one correct option`,
+        });
+      }
+
+      const question = await prisma.question.create({
+        data: {
+          text: q.text,
+          roundId: round.id,
+          options: {
+            create: q.options,
+          },
+        },
+        include: { options: true },
+      });
+
+      createdQuestions.push(question);
+    }
+
+    return res.status(201).json({
+      message: "Questions created successfully for Round 1",
+      questions: createdQuestions,
+    });
+
+  } catch (error) {
+    console.error("Create Question Error:", error);
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+};
+
+
+
 
 export const getQuestionsByRound = async (
   req: Request | any,

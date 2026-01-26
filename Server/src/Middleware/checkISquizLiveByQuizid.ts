@@ -1,19 +1,19 @@
 import { prisma } from "../lib/prisma";
 
-export const checkQuizLiveByqid = async (
+export const checkQuizLiveByQuizid = async (
   req: any,
   res: any,
   next: any
 ) => {
   try {
-    const { id } = req.params;
+    const { quizId } = req.params;
 
-    if (!id) {
+    if (!quizId) {
       return res.status(400).json({ message: "Quiz ID is required" });
     }
 
     const quiz = await prisma.quiz.findUnique({
-      where: { id: id },
+      where: { id: quizId },
       select: { status: true },
     });
 
