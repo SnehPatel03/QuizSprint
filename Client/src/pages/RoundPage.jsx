@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
@@ -34,11 +34,9 @@ const RoundPage = () => {
         setRoundId(round.roundId);
         setQuestions(round.questions || []);
 
-        // 👇 pick correct time limit
-        let seconds = 0;
-        if (roundNumber === "1") seconds = round.timeLimit1 * 60;
-        if (roundNumber === "2") seconds = round.timeLimit2 * 60;
-        if (roundNumber === "3") seconds = round.timeLimit3 * 60;
+        // Use timeLimit from response (in minutes, convert to seconds)
+        const timeLimitMinutes = round.timeLimit || 0;
+        const seconds = timeLimitMinutes * 60;
 
         setTimeLeft(seconds);
       } catch (err) {
@@ -52,24 +50,6 @@ const RoundPage = () => {
     startRound();
   }, [quizId, roundNumber, navigate]);
 
-  // ================= TIMER =================
-  useEffect(() => {
-    if (timeLeft <= 0 || submitting) return;
-
-    timerRef.current = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(timerRef.current);
-          handleSubmit(true);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(timerRef.current);
-  }, [timeLeft, submitting]);
-
   // ================= SELECT ANSWER =================
   const handleSelect = (questionId, optionId) => {
     setAnswers((prev) => ({
@@ -79,7 +59,7 @@ const RoundPage = () => {
   };
 
   // ================= SUBMIT =================
-  const handleSubmit = async (auto = false) => {
+  const handleSubmit = useCallback(async (auto = false) => {
     if (submitting || !roundId) return;
 
     if (!auto && Object.keys(answers).length !== questions.length) {
@@ -114,7 +94,29 @@ const RoundPage = () => {
       toast.error("Submission failed");
       setSubmitting(false);
     }
-  };
+  }, [roundId, submitting, answers, questions, quizId, roundNumber, navigate]);
+
+  // ================= TIMER =================
+  useEffect(() => {
+    if (timeLeft <= 0 || submitting) return;
+
+    timerRef.current = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(timerRef.current);
+          handleSubmit(true);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, [timeLeft, submitting, handleSubmit]);
 
   // ================= TIME FORMAT =================
   const minutes = Math.floor(timeLeft / 60);

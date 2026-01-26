@@ -55,8 +55,13 @@ export const fetchCompletedQuizzes = async (
         status: "COMPLETED",
       },
       include: {
-        rounds: {
-          where: { roundNumber: 3 },
+        attempts: {
+          where: {
+            isWinner: true,
+          },
+          include: {
+            user: true,
+          },
         },
       },
       orderBy: {
@@ -64,44 +69,20 @@ export const fetchCompletedQuizzes = async (
       },
     });
 
-    const result = [];
-
-    for (const quiz of completedQuizzes) {
-      const thirdRound = quiz.rounds[0];
-
-      let winnerName: string | null = null;
-
-      if (thirdRound) {
-        const winnerAttempt = await prisma.roundAttempt.findFirst({
-          where: {
-            roundId: thirdRound.id,
-            qualified: true,
-          },
-          include: {
-            quizAttempt: {
-              include: { user: true },
-            },
-          },
-          orderBy: {
-            timeTaken: "asc",
-          },
-        });
-
-        winnerName = winnerAttempt?.quizAttempt.user.name || null;
-      }
-
-      result.push({
+    const result = completedQuizzes.map((quiz) => {
+      const winner = quiz.attempts.find((attempt) => attempt.isWinner);
+      return {
         id: quiz.id,
         title: quiz.title,
         description: quiz.description,
         completedAt: quiz.createdAt,
-        winnerName,
-      });
-    }
+        winner: winner?.user.name || null,
+      };
+    });
 
     return res.status(200).json({
       message: "Completed quizzes fetched successfully",
-      quizzes: result,
+      quiz: result,
     });
 
   } catch (error) {
@@ -233,10 +214,62 @@ export const startQuizRound = async (
 
     const round = await prisma.round.findFirst({
       where: { quizId, roundNumber },
+      include: {
+        quiz: true,
+      },
     });
 
     if (!round) {
       return res.status(404).json({ message: "Round not found for this quiz" });
+    }
+
+    // Check if user is qualified for this round (for rounds 2 and 3)
+    if (roundNumber > 1) {
+      const previousRound = await prisma.round.findFirst({
+        where: { quizId, roundNumber: roundNumber - 1 },
+      });
+
+      if (previousRound) {
+        const previousRoundAttempt = await prisma.roundAttempt.findFirst({
+          where: {
+            roundId: previousRound.id,
+            quizAttemptId: quizAttempt.id,
+          },
+        });
+
+        if (!previousRoundAttempt || !previousRoundAttempt.qualified) {
+          return res.status(403).json({ 
+            message: "You are not qualified for this round" 
+          });
+        }
+
+        // Check buffer time (5 minutes) for rounds 2 and 3
+        const BUFFER_TIME_MS = 5 * 60 * 1000;
+        const previousRoundAnswers = await prisma.answer.findMany({
+          where: {
+            roundAttempt: {
+              roundId: previousRound.id,
+            },
+          },
+          orderBy: { createdAt: "desc" },
+          take: 1,
+        });
+
+        if (previousRoundAnswers.length > 0) {
+          const lastAnswerTime = new Date(previousRoundAnswers[0].createdAt);
+          const bufferEndTime = new Date(lastAnswerTime.getTime() + BUFFER_TIME_MS);
+          const now = new Date();
+
+          if (now < bufferEndTime) {
+            const remainingMs = bufferEndTime.getTime() - now.getTime();
+            const remainingMinutes = Math.ceil(remainingMs / 60000);
+            return res.status(403).json({ 
+              message: `Next round will start in ${remainingMinutes} minute(s). Please wait.`,
+              bufferTimeRemaining: remainingMs,
+            });
+          }
+        }
+      }
     }
 
     const alreadyStarted = await prisma.roundAttempt.findFirst({
@@ -342,6 +375,7 @@ export const getRoundResult = async (req: Request | any, res: Response | any) =>
             answers: true,
           },
         },
+        quiz: true,
       },
     });
 
@@ -365,10 +399,43 @@ export const getRoundResult = async (req: Request | any, res: Response | any) =>
 
     const myStatus = leaderboard.find((u) => u.userId === userId);
 
+    // Calculate buffer time (5 minutes = 300000 ms)
+    const BUFFER_TIME_MS = 5 * 60 * 1000;
+    const now = new Date();
+    let bufferTimeRemaining = 0;
+    let canStartNextRound = false;
+
+    // If round is completed and not final round, calculate buffer time
+    if (round.status === "COMPLETED" && round.roundNumber < 3) {
+      // Get the most recent answer submission time as round completion time
+      // Find the latest answer submission across all attempts
+      let lastAnswerTime = null;
+      for (const attempt of round.roundAttempts) {
+        for (const answer of attempt.answers) {
+          const answerTime = new Date(answer.createdAt).getTime();
+          if (!lastAnswerTime || answerTime > lastAnswerTime) {
+            lastAnswerTime = answerTime;
+          }
+        }
+      }
+      
+      // If no answers found, use round creation time (shouldn't happen for completed rounds)
+      if (!lastAnswerTime) {
+        lastAnswerTime = new Date(round.createdAt).getTime();
+      }
+      
+      const bufferEndTime = lastAnswerTime + BUFFER_TIME_MS;
+      bufferTimeRemaining = Math.max(0, bufferEndTime - now.getTime());
+      canStartNextRound = bufferTimeRemaining === 0;
+    }
+
     return res.status(200).json({
       roundNumber: round.roundNumber,
       leaderboard,
       myStatus,
+      bufferTimeRemaining,
+      canStartNextRound,
+      isFinalRound: round.roundNumber === 3,
     });
   } catch (err) {
     console.error("Round Result Error:", err);
@@ -441,6 +508,12 @@ export const markWinner = async (req: Request | any, res: Response | any) => {
       data: {
         isWinner: true,
       },
+    });
+
+    // 6. Mark quiz as COMPLETED
+    await prisma.quiz.update({
+      where: { id: quizId },
+      data: { status: "COMPLETED" },
     });
 
     return res.status(200).json({

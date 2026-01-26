@@ -8,7 +8,7 @@ const optionSchema = z.object({
 });
 
 const questionSchema = z.object({
-  text: z.string().min(5, "Question must be at least 5 characters"),
+  text: z.string().min(1, "Question must be at least 1 characters"),
   options: z.array(optionSchema).min(2, "Minimum 2 options required"),
 });
 

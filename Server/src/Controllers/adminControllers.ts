@@ -103,11 +103,33 @@ export const getAllQuiz = async (req: Request | any, res: Response) => {
       where: {
         createdBy: req.user.id,
       },
+      include: {
+        attempts: {
+          where: {
+            isWinner: true,
+          },
+          include: {
+            user: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    const quizzesWithWinner = quizzes.map((quiz) => {
+      const winner = quiz.attempts.find((attempt) => attempt.isWinner);
+      return {
+        ...quiz,
+        winner: winner?.user.name || null,
+        attempts: undefined, // Remove attempts from response
+      };
     });
 
     return res.status(200).json({
       message: "Quizzes fetched successfully",
-      quiz: quizzes,
+      quiz: quizzesWithWinner,
     });
   } catch (error) {
     console.error(error);

@@ -25,7 +25,7 @@ router.post("/startRound/:quizId/:roundNumber",startQuizRound)
 router.post("/submitRound/:roundId",submitRound)
 // router.get("/round/:roundId/status",getRoundStatus)
 router.get("/roundresult/:roundId",getRoundResult)
-router.post("markWinner:quizId",markWinner)
+router.post("/markWinner/:quizId", markWinner)
 
 
 export default router

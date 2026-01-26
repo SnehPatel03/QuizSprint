@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
@@ -14,7 +14,10 @@ const RoundResult = () => {
   const [leaderboard, setLeaderboard] = useState([]);
   const [myStatus, setMyStatus] = useState(null);
   const [winnerMarked, setWinnerMarked] = useState(false);
+  const [bufferTimeRemaining, setBufferTimeRemaining] = useState(0);
+  const [canStartNextRound, setCanStartNextRound] = useState(false);
 
+  const bufferTimerRef = useRef(null);
   const isFinalRound = Number(roundNumber) === 3;
 
   // ------------------ HELPERS ------------------
@@ -23,6 +26,13 @@ const RoundResult = () => {
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
     return `${minutes}m ${seconds}s`;
+  };
+
+  const formatBufferTime = (ms = 0) => {
+    const totalSeconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
   };
 
   // ------------------ FETCH ROUND RESULT ------------------
@@ -42,6 +52,8 @@ const RoundResult = () => {
 
         setLeaderboard(res.data.leaderboard || []);
         setMyStatus(res.data.myStatus || null);
+        setBufferTimeRemaining(res.data.bufferTimeRemaining || 0);
+        setCanStartNextRound(res.data.canStartNextRound || false);
       } catch (error) {
         toast.error("Failed to load round results");
       } finally {
@@ -53,6 +65,42 @@ const RoundResult = () => {
     const timer = setTimeout(fetchRoundResult, 4000);
     return () => clearTimeout(timer);
   }, [roundId, navigate]);
+
+  // ------------------ BUFFER TIME COUNTDOWN ------------------
+  useEffect(() => {
+    if (bufferTimeRemaining <= 0 || isFinalRound || !myStatus?.qualified) {
+      if (bufferTimeRemaining <= 0 && !isFinalRound && myStatus?.qualified) {
+        setCanStartNextRound(true);
+      }
+      return;
+    }
+
+    bufferTimerRef.current = setInterval(() => {
+      setBufferTimeRemaining((prev) => {
+        if (prev <= 1000) {
+          setCanStartNextRound(true);
+          return 0;
+        }
+        return prev - 1000;
+      });
+    }, 1000);
+
+    return () => {
+      if (bufferTimerRef.current) {
+        clearInterval(bufferTimerRef.current);
+      }
+    };
+  }, [bufferTimeRemaining, isFinalRound, myStatus?.qualified]);
+
+  // ------------------ AUTO NAVIGATE TO NEXT ROUND ------------------
+  useEffect(() => {
+    if (canStartNextRound && !isFinalRound && myStatus?.qualified) {
+      const timer = setTimeout(() => {
+        navigate(`/quiz/${quizId}/round/${Number(roundNumber) + 1}`);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [canStartNextRound, isFinalRound, myStatus?.qualified, quizId, roundNumber, navigate]);
 
   // ------------------ MARK WINNER (FINAL ROUND ONLY) ------------------
   useEffect(() => {
@@ -70,8 +118,8 @@ const RoundResult = () => {
     if (winner.userId === myStatus.userId) {
       axios
         .post(
-          "http://localhost:3000/user/markWinner",
-          { quizId },
+          `http://localhost:3000/user/markWinner/${quizId}`,
+          {},
           { withCredentials: true }
         )
         .then(() => setWinnerMarked(true))
@@ -153,19 +201,38 @@ const RoundResult = () => {
           </table>
         </div>
 
-        {/* NEXT ROUND BUTTON */}
+        {/* BUFFER TIME & NEXT ROUND INFO */}
         {myStatus?.qualified && !isFinalRound && (
-          <div className="mt-10 flex justify-center">
-            <button
-              onClick={() =>
-                navigate(
-                  `/quiz/${quizId}/round/${Number(roundNumber) + 1}`
-                )
-              }
-              className="px-8 py-3 bg-indigo-600 text-white rounded-xl font-semibold hover:scale-105 transition"
-            >
-              Proceed to Next Round →
-            </button>
+          <div className="mt-10">
+            {bufferTimeRemaining > 0 ? (
+              <div className="text-center">
+                <div className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-6 mb-4">
+                  <div className="text-lg font-semibold text-blue-800 mb-2">
+                    ⏳ Next Round Starting Soon
+                  </div>
+                  <div className="text-4xl font-bold text-blue-600 mb-2">
+                    {formatBufferTime(bufferTimeRemaining)}
+                  </div>
+                  <div className="text-sm text-blue-600">
+                    Round {Number(roundNumber) + 1} will start automatically
+                  </div>
+                </div>
+                <div className="text-sm text-slate-500">
+                  Please wait... You cannot proceed manually during buffer time.
+                </div>
+              </div>
+            ) : (
+              <div className="text-center">
+                <div className="bg-green-50 border-2 border-green-200 rounded-2xl p-6 mb-4">
+                  <div className="text-lg font-semibold text-green-800 mb-2">
+                    ✅ Round {Number(roundNumber) + 1} is Starting!
+                  </div>
+                  <div className="text-sm text-green-600">
+                    Redirecting you to the next round...
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

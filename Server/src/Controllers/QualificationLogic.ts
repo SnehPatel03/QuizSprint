@@ -44,5 +44,12 @@ export const calculateRoundQualification = async (roundId: string) => {
       data: { qualified },
     });
   }
+
+  // Mark round as COMPLETED after qualification is calculated
+  await prisma.round.update({
+    where: { id: roundId },
+    data: { status: "COMPLETED" },
+  });
+
   console.log(`Round ${roundId} qualification calculated successfully.`);
 };
