@@ -113,7 +113,7 @@ const SetQuePopUp = ({ quiz, onClose, onSuccess }) => {
     setLoading(true);
     try {
       await axios.post(
-        `http://localhost:3000/admin/question/createQuefor${currentRound}/${quiz.id}`,
+        `https://quizsprint-fox0.onrender.com/admin/question/createQuefor${currentRound}/${quiz.id}`,
         buildBackendPayload(),
         { withCredentials: true }
       );

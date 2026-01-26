@@ -31,7 +31,7 @@ const RoundResult = () => {
     try {
       setLoading(true);
       const res = await axios.get(
-        `http://localhost:3000/user/roundresult/${roundId}`,
+        `https://quizsprint-fox0.onrender.com/user/roundresult/${roundId}`,
         { withCredentials: true }
       );
 
@@ -114,7 +114,7 @@ const RoundResult = () => {
     if (!isFinalRound || !leaderboard.length || !myStatus) return;
     if (leaderboard[0].userId === myStatus.userId) {
       axios
-        .post(`http://localhost:3000/user/markWinner/${quizId}`, {}, { withCredentials: true })
+        .post(`https://quizsprint-fox0.onrender.com/user/markWinner/${quizId}`, {}, { withCredentials: true })
         .catch(() => {});
     }
   }, [leaderboard, myStatus, isFinalRound, quizId]);
