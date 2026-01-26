@@ -1,15 +1,15 @@
 import React from "react";
 import { LogOut } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const Navbar = () => {
+  const navigate = useNavigate();
   const handleLogout = () => {
-    // Clear JWT, role, and name from localStorage
     localStorage.removeItem("jwt");
     localStorage.removeItem("role");
     localStorage.removeItem("name");
 
-    // Redirect to home page
-    window.location.href = "/";
+    navigate("/");
   };
 
   return (

@@ -2,9 +2,12 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
 import { Play, Calendar, Trophy, Zap, Crown, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 
 const Dashboard = () => {
+  const navigate = useNavigate();
+
   const [liveQuizzes, setLiveQuizzes] = useState([]);
   const [upcomingQuizzes, setUpcomingQuizzes] = useState([]);
   const [completedQuizzes, setCompletedQuizzes] = useState([]);
@@ -22,9 +25,18 @@ const Dashboard = () => {
     setLoading(true);
     try {
       const [liveRes, draftRes, completedRes] = await Promise.all([
-        axios.get("https://quizsprint-fox0.onrender.com/user/fetchQuizUserLive", { withCredentials: true }),
-        axios.get("https://quizsprint-fox0.onrender.com/user/fetchQuizUserUpcoming", { withCredentials: true }),
-        axios.get("https://quizsprint-fox0.onrender.com/user/fetchQuizUserCompleted", { withCredentials: true }),
+        axios.get(
+          "https://quizsprint-fox0.onrender.com/user/fetchQuizUserLive",
+          { withCredentials: true }
+        ),
+        axios.get(
+          "https://quizsprint-fox0.onrender.com/user/fetchQuizUserUpcoming",
+          { withCredentials: true }
+        ),
+        axios.get(
+          "https://quizsprint-fox0.onrender.com/user/fetchQuizUserCompleted",
+          { withCredentials: true }
+        ),
       ]);
 
       setLiveQuizzes(liveRes.data.quiz || []);
@@ -42,9 +54,9 @@ const Dashboard = () => {
     fetchQuizzes();
   }, []);
 
-  // ================= JOIN QUIZ =================
   const handleJoinQuiz = async (quizId) => {
     if (joiningQuizId) return;
+
     try {
       setJoiningQuizId(quizId);
 
@@ -54,25 +66,44 @@ const Dashboard = () => {
         { withCredentials: true }
       );
 
-      setPopup({ show: true, message: res.data.message || "Joined quiz successfully", success: true, quizId });
+      setPopup({
+        show: true,
+        message: res.data.message || "Joined quiz successfully",
+        success: true,
+        quizId,
+      });
     } catch (err) {
-      setPopup({ show: true, message: err?.response?.data?.message || "Failed to join quiz", success: false, quizId: null });
+      setPopup({
+        show: true,
+        message:
+          err?.response?.data?.message || "Failed to join quiz",
+        success: false,
+        quizId: null,
+      });
     } finally {
       setJoiningQuizId(null);
     }
   };
 
-  const closePopup = () => setPopup({ show: false, message: "", success: false, quizId: null });
+  const closePopup = () =>
+    setPopup({ show: false, message: "", success: false, quizId: null });
 
   // ================= QUIZ CARD =================
   const QuizCard = ({ quiz, status }) => (
     <div className="relative bg-white/80 backdrop-blur-xl rounded-2xl p-5 border border-slate-200 shadow hover:shadow-xl transition flex flex-col justify-between min-h-[180px]">
       <div>
         <div className="flex justify-between items-start mb-2">
-          <h3 className="font-bold text-lg text-slate-800">{quiz.title}</h3>
-          <span className="px-3 py-1 text-xs rounded-full font-semibold bg-blue-100 text-blue-700">{status}</span>
+          <h3 className="font-bold text-lg text-slate-800">
+            {quiz.title}
+          </h3>
+          <span className="px-3 py-1 text-xs rounded-full font-semibold bg-blue-100 text-blue-700">
+            {status}
+          </span>
         </div>
-        <p className="text-sm text-slate-600 mb-4 line-clamp-2">{quiz.description}</p>
+
+        <p className="text-sm text-slate-600 mb-4 line-clamp-2">
+          {quiz.description}
+        </p>
 
         {(status === "UPCOMING" || status === "DRAFT") && (
           <div className="flex items-center gap-2 text-xs text-slate-500">
@@ -85,10 +116,17 @@ const Dashboard = () => {
           <div className="mt-3 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 text-xs text-red-600 font-semibold">
               <Play className="w-4 h-4 text-red-500 animate-pulse" />
-              {Math.floor((new Date() - new Date(quiz.startTime)) / (1000 * 60)) < 1
+              {Math.floor(
+                (new Date() - new Date(quiz.startTime)) /
+                  (1000 * 60)
+              ) < 1
                 ? "Just started"
-                : `Started ${Math.floor((new Date() - new Date(quiz.startTime)) / (1000 * 60))} min ago`}
+                : `Started ${Math.floor(
+                    (new Date() - new Date(quiz.startTime)) /
+                      (1000 * 60)
+                  )} min ago`}
             </div>
+
             <button
               onClick={() => handleJoinQuiz(quiz.id)}
               disabled={joiningQuizId === quiz.id}
@@ -98,7 +136,9 @@ const Dashboard = () => {
                   : "bg-gradient-to-r from-red-500 to-orange-500 hover:scale-105"
               }`}
             >
-              {joiningQuizId === quiz.id ? "Joining..." : "Join Quiz"}
+              {joiningQuizId === quiz.id
+                ? "Joining..."
+                : "Join Quiz"}
             </button>
           </div>
         )}
@@ -106,7 +146,9 @@ const Dashboard = () => {
         {status === "COMPLETED" && quiz.winner && (
           <div className="flex items-center gap-2 text-xs mt-2">
             <Crown className="w-4 h-4 text-amber-500" />
-            <span className="font-semibold text-amber-600">Winner: {quiz.winner}</span>
+            <span className="font-semibold text-amber-600">
+              Winner: {quiz.winner}
+            </span>
           </div>
         )}
       </div>
@@ -116,14 +158,27 @@ const Dashboard = () => {
   const QuizSection = ({ title, data, status, icon }) => (
     <div className="mb-10">
       <div className="flex items-center gap-3 mb-4">
-        <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center text-white">{icon}</div>
-        <h2 className="text-2xl font-bold text-slate-800">{title} ({data.length})</h2>
+        <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center text-white">
+          {icon}
+        </div>
+        <h2 className="text-2xl font-bold text-slate-800">
+          {title} ({data.length})
+        </h2>
       </div>
+
       {data.length === 0 ? (
-        <div className="bg-white/60 p-6 rounded-xl text-center text-slate-500">No quizzes available</div>
+        <div className="bg-white/60 p-6 rounded-xl text-center text-slate-500">
+          No quizzes available
+        </div>
       ) : (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {data.map((quiz) => <QuizCard key={quiz.id} quiz={quiz} status={status} />)}
+          {data.map((quiz) => (
+            <QuizCard
+              key={quiz.id}
+              quiz={quiz}
+              status={status}
+            />
+          ))}
         </div>
       )}
     </div>
@@ -140,37 +195,80 @@ const Dashboard = () => {
   return (
     <>
       <Navbar />
+
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-cyan-50 px-6 py-8">
         <Toaster position="top-right" />
 
         <div className="mb-10">
-          <h1 className="text-3xl font-bold text-slate-800">Welcome 👋</h1>
-          <span className="text-2xl font-bold text-slate-800">{localStorage.getItem("name")}</span>
-          <p className="text-slate-500">Participate in quizzes and track results</p>
+          <h1 className="text-3xl font-bold text-slate-800">
+            Welcome 👋
+          </h1>
+          <span className="text-2xl font-bold text-slate-800">
+            {localStorage.getItem("name")}
+          </span>
+          <p className="text-slate-500">
+            Participate in quizzes and track results
+          </p>
         </div>
 
-        <QuizSection title="Live Quizzes" data={liveQuizzes} status="LIVE" icon={<Play />} />
-        <QuizSection title="Upcoming Quizzes" data={upcomingQuizzes} status="UPCOMING" icon={<Calendar />} />
-        <QuizSection title="Completed Quizzes" data={completedQuizzes} status="COMPLETED" icon={<Trophy />} />
+        <QuizSection
+          title="Live Quizzes"
+          data={liveQuizzes}
+          status="LIVE"
+          icon={<Play />}
+        />
+        <QuizSection
+          title="Upcoming Quizzes"
+          data={upcomingQuizzes}
+          status="UPCOMING"
+          icon={<Calendar />}
+        />
+        <QuizSection
+          title="Completed Quizzes"
+          data={completedQuizzes}
+          status="COMPLETED"
+          icon={<Trophy />}
+        />
 
         {popup.show && (
           <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-            <div className="absolute inset-0 bg-black/50" onClick={closePopup} />
+            <div
+              className="absolute inset-0 bg-black/50"
+              onClick={closePopup}
+            />
+
             <div className="relative bg-white rounded-3xl shadow-2xl max-w-md w-full p-6">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold">Quiz Status</h2>
-                <button onClick={closePopup}><X /></button>
+                <h2 className="text-xl font-bold">
+                  Quiz Status
+                </h2>
+                <button onClick={closePopup}>
+                  <X />
+                </button>
               </div>
-              <p className="mb-4 text-slate-700">{popup.message}</p>
+
+              <p className="mb-4 text-slate-700">
+                {popup.message}
+              </p>
+
               {popup.success ? (
                 <button
-                  onClick={() => (window.location.href = `/quiz/${popup.quizId}/round/1`)}
+                  onClick={() =>
+                    navigate(
+                      `/quiz/${popup.quizId}/round/1`
+                    )
+                  }
                   className="w-full py-2 bg-blue-600 text-white font-semibold rounded-xl hover:scale-105 transition"
                 >
                   Go to Quiz
                 </button>
               ) : (
-                <button onClick={closePopup} className="w-full py-2 bg-gray-300 text-gray-700 font-semibold rounded-xl">Close</button>
+                <button
+                  onClick={closePopup}
+                  className="w-full py-2 bg-gray-300 text-gray-700 font-semibold rounded-xl"
+                >
+                  Close
+                </button>
               )}
             </div>
           </div>
