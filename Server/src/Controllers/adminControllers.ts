@@ -47,7 +47,7 @@ export const createQuiz = async (req: any, res: Response<QuizResponse>) => {
 
     
     const round1StartTime = new Date(
-      quizStartTime.getTime() + 1 * 60 * 1000
+      quizStartTime.getTime() + 5 * 60 * 1000
     );
 
     const quiz = await prisma.quiz.create({

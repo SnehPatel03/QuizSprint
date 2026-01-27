@@ -12,7 +12,7 @@ const QuizInfoPopup = ({ quiz, onClose }) => {
 
   const fetchRound = async (round) => {
     const res = await axios.get(
-      `http://localhost:3000/admin/question/fetchQue/${quiz.id}/${round}`,
+      `https://quizsprint-fox0.onrender.com/admin/question/fetchQue/${quiz.id}/${round}`,
       { withCredentials: true }
     );
     return res.data.questions || [];
@@ -49,7 +49,7 @@ const QuizInfoPopup = ({ quiz, onClose }) => {
 
     try {
       await axios.delete(
-        `http://localhost:3000/admin/question/deleteQue/${id}`,
+        `https://quizsprint-fox0.onrender.com/admin/question/deleteQue/${id}`,
         { withCredentials: true }
       );
 
@@ -74,7 +74,7 @@ const QuizInfoPopup = ({ quiz, onClose }) => {
     try {
       setSaving((prev) => ({ ...prev, [q.id]: true }));
       await axios.put(
-        `http://localhost:3000/admin/question/updateQue/${q.id}`,
+        `https://quizsprint-fox0.onrender.com/admin/question/updateQue/${q.id}`,
         {
           text: q.text,
           options: q.options.map((opt) => ({
