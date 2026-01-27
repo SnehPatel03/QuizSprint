@@ -97,7 +97,26 @@ const Dashboard = () => {
     return () => clearInterval(interval);
   }, [showPopup, popupQuizId]);
 
-  // ================= QUIZ CARD =================
+  // ================= FORMAT TIME FUNCTION =================
+  const formatTimeInMinutes = (seconds) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    
+    if (minutes === 0) {
+      return `${remainingSeconds} sec`;
+    } else if (remainingSeconds === 0) {
+      return `${minutes} min`;
+    } else {
+      return `${minutes} min ${remainingSeconds} sec`;
+    }
+  };
+
+  const formatTimeMMSS = (seconds) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${String(minutes).padStart(2, "0")}:${String(remainingSeconds).padStart(2, "0")}`;
+  };
+
   const QuizCard = ({ quiz, status }) => {
     const startTime = new Date(
       quiz.round1StartTime || quiz.startTime
@@ -140,9 +159,7 @@ const Dashboard = () => {
               {!started ? (
                 <div className="text-sm text-red-600 font-semibold flex gap-2 items-center">
                   <Play className="animate-pulse" />
-                  Starts in{" "}
-                  {String(Math.floor(timeLeft / 60)).padStart(2, "0")}:
-                  {String(timeLeft % 60).padStart(2, "0")}
+                  Starts in {formatTimeInMinutes(timeLeft)}
                 </div>
               ) : (
                 <div className="text-sm text-green-600 font-semibold flex gap-2 items-center">
@@ -248,8 +265,11 @@ const Dashboard = () => {
               </h2>
 
               <div className="text-4xl font-mono mb-6">
-                {String(Math.floor(popupTimeLeft / 60)).padStart(2, "0")}:
-                {String(popupTimeLeft % 60).padStart(2, "0")}
+                {formatTimeMMSS(popupTimeLeft)}
+              </div>
+              
+              <div className="text-sm text-slate-600 mb-6">
+                ({formatTimeInMinutes(popupTimeLeft)})
               </div>
 
               <button
