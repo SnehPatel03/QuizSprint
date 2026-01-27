@@ -10,11 +10,11 @@ export const formatIST = (time) => {
     hour: "2-digit",
     minute: "2-digit",
     hour12: true,
-    timeZone: "Asia/Kolkata", // ✅ important
+    timeZone: "Asia/Kolkata", // ✅ this handles +5:30 automatically
   });
 };
 
-// Get IST timestamp (ms since epoch)
+// Get IST timestamp in ms
 export const getISTTimestamp = (date) => {
   if (!date) return null;
   return new Date(
