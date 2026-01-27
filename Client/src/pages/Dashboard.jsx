@@ -19,6 +19,27 @@ const Dashboard = () => {
   const [popupTimeLeft, setPopupTimeLeft] = useState(0);
   const [popupQuizId, setPopupQuizId] = useState(null);
 
+  // ================= HELPER FUNCTION =================
+  const formatReadableTime = (isoString) => {
+    if (!isoString) return "-";
+    const date = new Date(isoString);
+    return date.toLocaleString("en-IN", {
+      timeZone: "Asia/Kolkata", // IST
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
+  };
+
+  const formatTime = (seconds) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+  };
+
   // ================= FETCH QUIZZES =================
   const fetchQuizzes = async () => {
     setLoading(true);
@@ -95,24 +116,18 @@ const Dashboard = () => {
     return () => clearInterval(interval);
   }, [showPopup, popupQuizId]);
 
-  // ================= FORMAT TIME =================
-  const formatTime = (seconds) => {
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
-  };
-
   // ================= QUIZ CARD =================
   const QuizCard = ({ quiz, status }) => {
     const startTime = new Date(quiz.round1StartTime || quiz.startTime).getTime();
-    const [timeLeft, setTimeLeft] = useState(Math.max(0, Math.floor((startTime - Date.now()) / 1000)));
+    const [timeLeft, setTimeLeft] = useState(
+      Math.max(0, Math.floor((startTime - Date.now()) / 1000))
+    );
 
     useEffect(() => {
       const interval = setInterval(() => {
         const diff = Math.max(0, Math.floor((startTime - Date.now()) / 1000));
         setTimeLeft(diff);
       }, 1000);
-
       return () => clearInterval(interval);
     }, [startTime]);
 
@@ -144,9 +159,13 @@ const Dashboard = () => {
           )}
 
           {status === "UPCOMING" && (
-            <div className="text-sm text-slate-500 flex gap-2 items-center">
-              <Calendar />
-              {new Date(startTime).toLocaleString()}
+            <div className="text-sm text-slate-500 flex flex-col gap-1">
+              <div className="flex gap-2 items-center">
+                <Calendar /> {quiz.round1StartTime || quiz.startTime} {/* UTC */}
+              </div>
+              <div className="text-xs text-slate-400">
+                {formatReadableTime(quiz.round1StartTime || quiz.startTime)} (IST)
+              </div>
             </div>
           )}
         </div>
@@ -251,14 +270,8 @@ const Dashboard = () => {
         )}
 
         <style jsx>{`
-          @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-          }
-          @keyframes slideUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-          }
+          @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+          @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
           .animate-fadeIn { animation: fadeIn 0.2s ease-out; }
           .animate-slideUp { animation: slideUp 0.3s ease-out; }
         `}</style>
