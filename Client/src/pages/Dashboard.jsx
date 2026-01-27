@@ -19,8 +19,6 @@
     const [popupTimeLeft, setPopupTimeLeft] = useState(0);
     const [popupQuizId, setPopupQuizId] = useState(null);
 
-    // ================= HELPER FUNCTION =================
-    
 
 
 
@@ -131,7 +129,7 @@
                 {!started ? (
                   <div className="text-sm text-red-600 font-semibold flex gap-2 items-center">
                     <Play className="animate-pulse" />
-                    Starts in {formatTime(timeLeft)}
+                    Starts in {timeLeft}
                   </div>
                 ) : (
                   <div className="text-sm text-green-600 font-semibold flex gap-2 items-center">
@@ -236,7 +234,7 @@
 
                   <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl p-6 mb-6 border border-blue-100">
                     <div className="text-5xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent font-mono">
-                      {formatTime(popupTimeLeft)}
+                      {popupTimeLeft}
                     </div>
                   </div>
 
