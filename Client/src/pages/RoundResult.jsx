@@ -1,7 +1,10 @@
+// src/pages/RoundResult.jsx
+
 import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
+import { formatIST } from "../utils/time"; // ✅ import your time utility
 
 const RoundResult = () => {
   const { roundId, quizId, roundNumber } = useParams();
@@ -15,6 +18,7 @@ const RoundResult = () => {
   const [bufferTimeRemaining, setBufferTimeRemaining] = useState(0);
   const [canStartNextRound, setCanStartNextRound] = useState(false);
   const [isFinalRound, setIsFinalRound] = useState(false);
+  const [roundStartTime, setRoundStartTime] = useState(null); // ✅ server start time
 
   const roundTimerRef = useRef(null);
   const bufferTimerRef = useRef(null);
@@ -39,6 +43,10 @@ const RoundResult = () => {
       setRoundOngoing(res.data.roundOngoing);
       setRoundTimeRemaining(res.data.roundTimeRemaining);
       setIsFinalRound(res.data.isFinalRound);
+
+      if (res.data.startTime) {
+        setRoundStartTime(res.data.startTime); // ✅ store server start time
+      }
 
       if (!res.data.roundOngoing && res.data.leaderboard.length > 0) {
         setLeaderboard(res.data.leaderboard);
@@ -142,13 +150,16 @@ const RoundResult = () => {
   if (roundOngoing) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center text-center p-6">
-        <div className="text-xl font-semibold mb-4">⏳ Round in Progress</div>
+        <div className="text-xl font-semibold mb-2">⏳ Round in Progress</div>
+        {roundStartTime && (
+          <div className="text-sm text-gray-500 mb-2">
+            Started at: {formatIST(roundStartTime)} (IST)
+          </div>
+        )}
         <div className="text-5xl font-bold text-blue-600">
           {formatTime(roundTimeRemaining)}
         </div>
-        <div className="mt-4 text-slate-500">
-          Please wait until the round ends
-        </div>
+        <div className="mt-4 text-slate-500">Please wait until the round ends</div>
       </div>
     );
   }
@@ -163,9 +174,12 @@ const RoundResult = () => {
   return (
     <div className="min-h-screen bg-slate-50 p-6">
       <div className="max-w-4xl mx-auto text-center">
-        <h1 className="text-3xl font-bold mb-2">
-          Round {roundNumber} Results
-        </h1>
+        <h1 className="text-3xl font-bold mb-2">Round {roundNumber} Results</h1>
+        {roundStartTime && (
+          <p className="text-sm text-gray-500 mb-2">
+            Round started at: {formatIST(roundStartTime)} (IST)
+          </p>
+        )}
         <p className="text-slate-500 mb-6">
           {isFinalRound ? "Final Leaderboard" : "Leaderboard"}
         </p>
@@ -204,9 +218,7 @@ const RoundResult = () => {
                   <td className="p-4 font-bold">{idx + 1}</td>
                   <td className="p-4 text-left">{user.name}</td>
                   <td className="p-4 font-semibold">{user.correctScore}</td>
-                  <td className="p-4">
-                    {formatTime(user.timeTaken)}
-                  </td>
+                  <td className="p-4">{formatTime(user.timeTaken)}</td>
                 </tr>
               ))}
             </tbody>
@@ -232,9 +244,7 @@ const RoundResult = () => {
                 <div className="text-lg font-semibold text-green-800 mb-2">
                   ✅ Next Round Starting!
                 </div>
-                <div className="text-sm text-green-600">
-                  Redirecting...
-                </div>
+                <div className="text-sm text-green-600">Redirecting...</div>
               </div>
             )}
           </div>

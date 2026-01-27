@@ -4,6 +4,7 @@ import toast, { Toaster } from "react-hot-toast";
 import { Play, Calendar, Zap, Crown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
+import { formatIST, getISTTimestamp } from "../utils/time";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -24,15 +25,18 @@ const Dashboard = () => {
     setLoading(true);
     try {
       const [live, upcoming, completed] = await Promise.all([
-        axios.get("https://quizsprint-fox0.onrender.com/user/fetchQuizUserLive", {
-          withCredentials: true,
-        }),
-        axios.get("https://quizsprint-fox0.onrender.com/user/fetchQuizUserUpcoming", {
-          withCredentials: true,
-        }),
-        axios.get("https://quizsprint-fox0.onrender.com/user/fetchQuizUserCompleted", {
-          withCredentials: true,
-        }),
+        axios.get(
+          "https://quizsprint-fox0.onrender.com/user/fetchQuizUserLive",
+          { withCredentials: true }
+        ),
+        axios.get(
+          "https://quizsprint-fox0.onrender.com/user/fetchQuizUserUpcoming",
+          { withCredentials: true }
+        ),
+        axios.get(
+          "https://quizsprint-fox0.onrender.com/user/fetchQuizUserCompleted",
+          { withCredentials: true }
+        ),
       ]);
 
       setLiveQuizzes(live.data.quiz || []);
@@ -52,7 +56,6 @@ const Dashboard = () => {
   // ================= JOIN QUIZ =================
   const handleJoinQuiz = async (quizId) => {
     if (joiningQuizId) return;
-
     setJoiningQuizId(quizId);
 
     try {
@@ -106,9 +109,9 @@ const Dashboard = () => {
 
   // ================= QUIZ CARD =================
   const QuizCard = ({ quiz, status }) => {
-    const startTime = new Date(
+    const startTime = getISTTimestamp(
       quiz.round1StartTime || quiz.startTime
-    ).getTime();
+    );
 
     const [timeLeft, setTimeLeft] = useState(
       Math.max(0, startTime - Date.now())
@@ -158,7 +161,7 @@ const Dashboard = () => {
           {status === "UPCOMING" && (
             <div className="text-sm text-slate-500 flex gap-2 items-center">
               <Calendar />
-              {new Date(startTime).toLocaleString()}
+              {formatIST(startTime)}
             </div>
           )}
         </div>
@@ -210,6 +213,10 @@ const Dashboard = () => {
           Welcome 👋 {localStorage.getItem("name")}
         </h1>
 
+        <p className="text-xs text-gray-400 mb-6">
+          All times shown in IST (UTC +5:30)
+        </p>
+
         {/* LIVE QUIZZES */}
         <section className="mb-8">
           <h2 className="text-xl font-bold mb-4">Live Quizzes</h2>
@@ -251,35 +258,6 @@ const Dashboard = () => {
             </div>
           )}
         </section>
-
-        {/* ================= POPUP ================= */}
-        {showPopup && (
-          <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex justify-center items-center z-50 px-4">
-            <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden">
-              <div className="bg-gradient-to-r from-blue-600 to-cyan-600 px-8 py-6 text-center">
-                <h2 className="text-2xl font-bold text-white">
-                  Round Not Started Yet
-                </h2>
-                <p className="text-blue-100 text-sm">
-                  Please wait for the round to begin
-                </p>
-              </div>
-
-              <div className="p-8 text-center">
-                <div className="text-5xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent font-mono mb-6">
-                  {formatTime(popupTimeLeft)}
-                </div>
-
-                <button
-                  onClick={() => handleJoinQuiz(popupQuizId)}
-                  className="w-full py-4 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-xl font-semibold hover:opacity-90"
-                >
-                  Refresh Status
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </>
   );

@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState, useCallback } from "react";
 import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
+import { formatIST } from "../utils/time"; // ✅ import your time utility
 
 const RoundPage = () => {
   const { quizId, roundNumber } = useParams();
@@ -15,6 +16,7 @@ const RoundPage = () => {
   const [timeLeft, setTimeLeft] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [answers, setAnswers] = useState({});
+  const [roundStartTime, setRoundStartTime] = useState(null); // ✅ store server start time
 
   const timerRef = useRef(null);
 
@@ -29,12 +31,10 @@ const RoundPage = () => {
           { withCredentials: true }
         );
 
-        // ✅ SERVER IS SOURCE OF TRUTH
         setRoundId(res.data.roundId);
         setQuestions(res.data.questions || []);
 
-        // Use remaining time from backend (in seconds)
-        const serverTimeLeft = res.data.timeLeft;
+        const serverTimeLeft = res.data.timeLeft; // seconds
         if (!serverTimeLeft || serverTimeLeft <= 0) {
           toast.error(`Round ${roundNumber} has already ended`);
           navigate("/dashboard");
@@ -42,8 +42,11 @@ const RoundPage = () => {
         }
         setTimeLeft(serverTimeLeft);
 
+        if (res.data.startTime) {
+          setRoundStartTime(res.data.startTime); // ✅ store server startTime
+        }
+
       } catch (err) {
-        // ✅ Backend already tells why user cannot start
         toast.error(err?.response?.data?.message || "Round not started yet");
         navigate("/dashboard");
       } finally {
@@ -114,13 +117,25 @@ const RoundPage = () => {
   }, [timeLeft, submitting, handleSubmit]);
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">⏳ Loading round...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        ⏳ Loading round...
+      </div>
+    );
   }
 
   return (
     <div className="min-h-screen bg-slate-50 p-6 max-w-4xl mx-auto">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Round {roundNumber}</h1>
+        <div>
+          <h1 className="text-2xl font-bold">Round {roundNumber}</h1>
+          {roundStartTime && (
+            <p className="text-sm text-gray-500">
+              Started at: {formatIST(roundStartTime)} (IST)
+            </p>
+          )}
+        </div>
+
         <div className="px-4 py-2 rounded-xl font-semibold bg-indigo-100 text-indigo-700">
           ⏱ {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, "0")}
         </div>
