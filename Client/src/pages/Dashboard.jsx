@@ -9,12 +9,19 @@ import Navbar from "../components/Navbar";
 
 // =================== UTILS ===================
 export const formatIST = (utcTime) => {
-  const date = new Date(utcTime);
-  return date.toLocaleString("en-IN", { timeZone: "Asia/Kolkata" });
+  if (!utcTime) return "-";
+  return new Date(utcTime).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" });
 };
 
 export const getUTCms = (utcTime) => {
   return new Date(utcTime).getTime();
+};
+
+// Convert server UTC ms to IST ms for timers
+export const getISTms = (utcTime) => {
+  const d = new Date(utcTime);
+  // IST = UTC + 5:30
+  return d.getTime() + 5.5 * 60 * 60 * 1000;
 };
 
 // =================== DASHBOARD ===================
@@ -27,28 +34,14 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(false);
   const [joiningQuizId, setJoiningQuizId] = useState(null);
 
-  // ================= POPUP STATES =================
-  const [showPopup, setShowPopup] = useState(false);
-  const [popupTimeLeft, setPopupTimeLeft] = useState(0);
-  const [popupQuizId, setPopupQuizId] = useState(null);
-
   // ================= FETCH QUIZZES =================
   const fetchQuizzes = async () => {
     setLoading(true);
     try {
       const [live, upcoming, completed] = await Promise.all([
-        axios.get(
-          "https://quizsprint-fox0.onrender.com/user/fetchQuizUserLive",
-          { withCredentials: true }
-        ),
-        axios.get(
-          "https://quizsprint-fox0.onrender.com/user/fetchQuizUserUpcoming",
-          { withCredentials: true }
-        ),
-        axios.get(
-          "https://quizsprint-fox0.onrender.com/user/fetchQuizUserCompleted",
-          { withCredentials: true }
-        ),
+        axios.get("https://quizsprint-fox0.onrender.com/user/fetchQuizUserLive", { withCredentials: true }),
+        axios.get("https://quizsprint-fox0.onrender.com/user/fetchQuizUserUpcoming", { withCredentials: true }),
+        axios.get("https://quizsprint-fox0.onrender.com/user/fetchQuizUserCompleted", { withCredentials: true }),
       ]);
 
       setLiveQuizzes(live.data.quiz || []);
@@ -78,12 +71,9 @@ const Dashboard = () => {
       );
 
       if (res.data.roundStarted) {
-        setShowPopup(false);
         navigate(`/quiz/${quizId}/round/1`);
       } else {
-        setPopupQuizId(quizId);
-        setPopupTimeLeft(Math.max(0, Math.ceil(res.data.startsInMs / 1000)));
-        setShowPopup(true);
+        toast.info(`Round will start at ${formatIST(res.data.startTime)}`);
       }
     } catch (err) {
       toast.error(err?.response?.data?.message || "Unable to join quiz");
@@ -92,47 +82,27 @@ const Dashboard = () => {
     }
   };
 
-  // ================= POPUP TIMER =================
-  useEffect(() => {
-    if (!showPopup || !popupQuizId || popupTimeLeft <= 0) return;
-
-    const interval = setInterval(() => {
-      setPopupTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          handleJoinQuiz(popupQuizId);
-          setShowPopup(false);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [showPopup, popupQuizId, popupTimeLeft]);
-
-  const formatTime = (seconds) => {
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
-  };
-
   // ================= QUIZ CARD =================
   const QuizCard = ({ quiz, status }) => {
-    // Use UTC timestamp for countdown
-    const startTimeUTC = getUTCms(quiz.round1StartTime || quiz.startTime);
-    const [timeLeft, setTimeLeft] = useState(Math.max(0, startTimeUTC - Date.now()));
+    // Calculate countdown using IST milliseconds
+    const startTime = quiz.round1StartTime || quiz.startTime;
+    const startTimeMs = getUTCms(startTime);
+    const [timeLeft, setTimeLeft] = useState(Math.max(0, startTimeMs - Date.now()));
 
-    const started = Date.now() >= startTimeUTC;
+    const started = Date.now() >= startTimeMs;
 
     useEffect(() => {
       if (timeLeft <= 0) return;
-      const t = setInterval(
-        () => setTimeLeft(Math.max(0, startTimeUTC - Date.now())),
-        1000
-      );
+      const t = setInterval(() => setTimeLeft(Math.max(0, startTimeMs - Date.now())), 1000);
       return () => clearInterval(t);
-    }, [startTimeUTC, timeLeft]);
+    }, [startTimeMs, timeLeft]);
+
+    const formatTime = (ms) => {
+      const totalSeconds = Math.floor(ms / 1000);
+      const m = Math.floor(totalSeconds / 60);
+      const s = totalSeconds % 60;
+      return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+    };
 
     return (
       <div className="bg-white rounded-2xl p-5 shadow flex flex-col justify-between min-h-[190px]">
@@ -149,7 +119,7 @@ const Dashboard = () => {
               {!started ? (
                 <div className="text-sm text-red-600 font-semibold flex gap-2 items-center">
                   <Play className="animate-pulse" />
-                  Starts in {formatTime(Math.floor(timeLeft / 1000))}
+                  Starts in {formatTime(timeLeft)}
                 </div>
               ) : (
                 <div className="text-sm text-green-600 font-semibold flex gap-2 items-center">
@@ -161,7 +131,7 @@ const Dashboard = () => {
 
           {status === "UPCOMING" && (
             <div className="text-sm text-slate-500 flex gap-2 items-center">
-              <Calendar /> {formatIST(quiz.round1StartTime || quiz.startTime)}
+              <Calendar /> {formatIST(startTime)}
             </div>
           )}
         </div>
