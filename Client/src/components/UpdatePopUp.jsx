@@ -227,7 +227,7 @@ const UpdatePopUp = ({ onClose, onSuccess, quiz }) => {
               name="timeLimit1"
               value={formData.timeLimit1}
               onChange={handleChange}
-              placeholder="Round 1 Time (sec)"
+              placeholder="Round 1 Time (min)"
               className="input"
               required
             />
@@ -236,7 +236,7 @@ const UpdatePopUp = ({ onClose, onSuccess, quiz }) => {
               name="timeLimit2"
               value={formData.timeLimit2}
               onChange={handleChange}
-              placeholder="Round 2 Time (sec)"
+              placeholder="Round 2 Time (min)"
               className="input"
               required
             />
@@ -245,7 +245,7 @@ const UpdatePopUp = ({ onClose, onSuccess, quiz }) => {
               name="timeLimit3"
               value={formData.timeLimit3}
               onChange={handleChange}
-              placeholder="Round 3 Time (sec)"
+              placeholder="Round 3 Time (min)"
               className="input"
               required
             />

@@ -1,3 +1,5 @@
+// src/pages/AdminDashboard.jsx
+
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
@@ -10,7 +12,6 @@ import {
   Crown,
   Zap,
   Trash2,
-  Settings2,
   Edit2,
 } from "lucide-react";
 
@@ -20,6 +21,15 @@ import SetQuePopUp from "../components/SetQuePopUp.jsx";
 import QuizInfoPopup from "../components/QuizInfoPopup.jsx";
 import Navbar from "../components/Navbar.jsx";
 
+// ==================== UTILS ====================
+const formatIST = (utcTime) => {
+  if (!utcTime) return "-";
+  return new Date(utcTime).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" });
+};
+
+const getUTCms = (utcTime) => new Date(utcTime).getTime();
+
+// ================== ADMIN DASHBOARD ==================
 const AdminDashboard = () => {
   const [quizzes, setQuizzes] = useState([]);
   const [adminName, setAdminName] = useState("Admin");
@@ -34,10 +44,10 @@ const AdminDashboard = () => {
   const fetchQuizzes = async () => {
     try {
       setLoading(true);
-      const res = await axios.get("https://quizsprint-fox0.onrender.com/admin/fetchQuiz", {
-        withCredentials: true,
-      });
-
+      const res = await axios.get(
+        "https://quizsprint-fox0.onrender.com/admin/fetchQuiz",
+        { withCredentials: true }
+      );
       setQuizzes(res.data.quiz || []);
       setAdminName(localStorage.getItem("name") || "Admin");
     } catch (err) {
@@ -51,13 +61,13 @@ const AdminDashboard = () => {
     fetchQuizzes();
   }, []);
 
-  // Normalize status for safe filtering
   const getStatus = (status) => status?.toUpperCase().trim();
 
   const draftQuizzes = quizzes.filter((q) => getStatus(q.status) === "DRAFT");
   const liveQuizzes = quizzes.filter((q) => getStatus(q.status) === "LIVE");
   const completedQuizzes = quizzes.filter((q) => getStatus(q.status) === "COMPLETED");
 
+  // ================== QUIZ CARD ==================
   const QuizCard = ({ quiz }) => {
     const [deleting, setDeleting] = useState(false);
 
@@ -72,7 +82,6 @@ const AdminDashboard = () => {
         toast.error("Only DRAFT quizzes can be deleted");
         return;
       }
-
       if (!window.confirm("Delete this quiz?")) return;
 
       setDeleting(true);
@@ -131,7 +140,7 @@ const AdminDashboard = () => {
 
           <div className="text-xs text-slate-500 flex items-center gap-2">
             <Calendar className="w-4 h-4" />
-            {new Date(quiz.startTime).toLocaleString()}
+            {formatIST(quiz.startTime)}
           </div>
 
           {getStatus(quiz.status) === "COMPLETED" && quiz.winner && (
@@ -178,6 +187,7 @@ const AdminDashboard = () => {
     );
   };
 
+  // ================== QUIZ SECTION ==================
   const QuizSection = ({ title, data, icon }) => (
     <div className="mb-10">
       <div className="flex items-center gap-3 mb-4">

@@ -1,11 +1,23 @@
+// src/pages/Dashboard.jsx
+
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
 import { Play, Calendar, Zap, Crown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
-import { formatIST, getISTTimestamp } from "../utils/time";
 
+// =================== UTILS ===================
+export const formatIST = (utcTime) => {
+  const date = new Date(utcTime);
+  return date.toLocaleString("en-IN", { timeZone: "Asia/Kolkata" });
+};
+
+export const getUTCms = (utcTime) => {
+  return new Date(utcTime).getTime();
+};
+
+// =================== DASHBOARD ===================
 const Dashboard = () => {
   const navigate = useNavigate();
 
@@ -102,45 +114,35 @@ const Dashboard = () => {
   const formatTime = (seconds) => {
     const m = Math.floor(seconds / 60);
     const s = seconds % 60;
-    return `${m.toString().padStart(2, "0")}:${s
-      .toString()
-      .padStart(2, "0")}`;
+    return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
   };
 
   // ================= QUIZ CARD =================
   const QuizCard = ({ quiz, status }) => {
-    const startTime = getISTTimestamp(
-      quiz.round1StartTime || quiz.startTime
-    );
+    // Use UTC timestamp for countdown
+    const startTimeUTC = getUTCms(quiz.round1StartTime || quiz.startTime);
+    const [timeLeft, setTimeLeft] = useState(Math.max(0, startTimeUTC - Date.now()));
 
-    const [timeLeft, setTimeLeft] = useState(
-      Math.max(0, startTime - Date.now())
-    );
+    const started = Date.now() >= startTimeUTC;
 
     useEffect(() => {
       if (timeLeft <= 0) return;
       const t = setInterval(
-        () => setTimeLeft(Math.max(0, startTime - Date.now())),
+        () => setTimeLeft(Math.max(0, startTimeUTC - Date.now())),
         1000
       );
       return () => clearInterval(t);
-    }, [startTime, timeLeft]);
-
-    const started = Date.now() >= startTime;
+    }, [startTimeUTC, timeLeft]);
 
     return (
       <div className="bg-white rounded-2xl p-5 shadow flex flex-col justify-between min-h-[190px]">
         <div>
           <div className="flex justify-between mb-2">
             <h3 className="font-bold">{quiz.title}</h3>
-            <span className="text-xs px-3 py-1 bg-blue-100 rounded-full">
-              {status}
-            </span>
+            <span className="text-xs px-3 py-1 bg-blue-100 rounded-full">{status}</span>
           </div>
 
-          <p className="text-sm text-slate-600 mb-3">
-            {quiz.description}
-          </p>
+          <p className="text-sm text-slate-600 mb-3">{quiz.description}</p>
 
           {status === "LIVE" && (
             <>
@@ -151,8 +153,7 @@ const Dashboard = () => {
                 </div>
               ) : (
                 <div className="text-sm text-green-600 font-semibold flex gap-2 items-center">
-                  <Play />
-                  Live Now
+                  <Play /> Live Now
                 </div>
               )}
             </>
@@ -160,8 +161,7 @@ const Dashboard = () => {
 
           {status === "UPCOMING" && (
             <div className="text-sm text-slate-500 flex gap-2 items-center">
-              <Calendar />
-              {formatIST(startTime)}
+              <Calendar /> {formatIST(quiz.round1StartTime || quiz.startTime)}
             </div>
           )}
         </div>
@@ -186,8 +186,7 @@ const Dashboard = () => {
 
         {status === "COMPLETED" && quiz.winner && (
           <div className="text-xs mt-2 flex gap-2 items-center">
-            <Crown className="text-yellow-500" />
-            Winner: {quiz.winner}
+            <Crown className="text-yellow-500" /> Winner: {quiz.winner}
           </div>
         )}
       </div>
@@ -213,9 +212,7 @@ const Dashboard = () => {
           Welcome 👋 {localStorage.getItem("name")}
         </h1>
 
-        <p className="text-xs text-gray-400 mb-6">
-          All times shown in IST (UTC +5:30)
-        </p>
+        <p className="text-xs text-gray-400 mb-6">All times shown in IST (UTC +5:30)</p>
 
         {/* LIVE QUIZZES */}
         <section className="mb-8">
