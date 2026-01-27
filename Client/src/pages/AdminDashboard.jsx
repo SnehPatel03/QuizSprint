@@ -20,14 +20,7 @@ import UpdatePopUp from "../components/UpdatePopUp.jsx";
 import SetQuePopUp from "../components/SetQuePopUp.jsx";
 import QuizInfoPopup from "../components/QuizInfoPopup.jsx";
 import Navbar from "../components/Navbar.jsx";
-
-// ==================== UTILS ====================
-const formatIST = (utcTime) => {
-  if (!utcTime) return "-";
-  return new Date(utcTime).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" });
-};
-
-const getUTCms = (utcTime) => new Date(utcTime).getTime();
+import { formatIST, getISTTimestamp } from "../utils/time.js"; // ✅ use imported time.js
 
 // ================== ADMIN DASHBOARD ==================
 const AdminDashboard = () => {
@@ -65,7 +58,9 @@ const AdminDashboard = () => {
 
   const draftQuizzes = quizzes.filter((q) => getStatus(q.status) === "DRAFT");
   const liveQuizzes = quizzes.filter((q) => getStatus(q.status) === "LIVE");
-  const completedQuizzes = quizzes.filter((q) => getStatus(q.status) === "COMPLETED");
+  const completedQuizzes = quizzes.filter(
+    (q) => getStatus(q.status) === "COMPLETED"
+  );
 
   // ================== QUIZ CARD ==================
   const QuizCard = ({ quiz }) => {
@@ -140,7 +135,7 @@ const AdminDashboard = () => {
 
           <div className="text-xs text-slate-500 flex items-center gap-2">
             <Calendar className="w-4 h-4" />
-            {formatIST(quiz.startTime)}
+            {formatIST(quiz.startTime)} {/* ✅ uses imported formatIST */}
           </div>
 
           {getStatus(quiz.status) === "COMPLETED" && quiz.winner && (
