@@ -21,8 +21,6 @@ import SetQuePopUp from "../components/SetQuePopUp.jsx";
 import QuizInfoPopup from "../components/QuizInfoPopup.jsx";
 import Navbar from "../components/Navbar.jsx";
 
-
-// ================== ADMIN DASHBOARD ==================
 const AdminDashboard = () => {
   const [quizzes, setQuizzes] = useState([]);
   const [adminName, setAdminName] = useState("Admin");
@@ -34,7 +32,7 @@ const AdminDashboard = () => {
   const [showInfoPopup, setShowInfoPopup] = useState(false);
   const [editingQuiz, setEditingQuiz] = useState(null);
 
-  // ================== FETCH QUIZZES ==================
+  // ================= FETCH QUIZZES =================
   const fetchQuizzes = async () => {
     try {
       setLoading(true);
@@ -63,7 +61,7 @@ const AdminDashboard = () => {
     (q) => getStatus(q.status) === "COMPLETED"
   );
 
-  // ================== QUIZ CARD ==================
+  // ================= QUIZ CARD =================
   const QuizCard = ({ quiz }) => {
     const [deleting, setDeleting] = useState(false);
 
@@ -132,11 +130,13 @@ const AdminDashboard = () => {
             </span>
           </div>
 
-          <p className="text-sm text-slate-600 mb-3">{quiz.description}</p>
+          <p className="text-sm text-slate-600 mb-3">
+            {quiz.description}
+          </p>
 
           <div className="text-xs text-slate-500 flex items-center gap-2">
             <Calendar className="w-4 h-4" />
-            {quiz.startTime} {/* ✅ shows correct IST */}
+            {new Date(quiz.startTime).toLocaleString()}
           </div>
 
           {getStatus(quiz.status) === "COMPLETED" && quiz.winner && (
@@ -183,7 +183,7 @@ const AdminDashboard = () => {
     );
   };
 
-  // ================== QUIZ SECTION ==================
+  // ================= QUIZ SECTION =================
   const QuizSection = ({ title, data, icon }) => (
     <div className="mb-10">
       <div className="flex items-center gap-3 mb-4">
@@ -225,7 +225,9 @@ const AdminDashboard = () => {
       <div className="min-h-screen bg-slate-50 px-6 py-8">
         <div className="flex justify-between items-center mb-10">
           <div>
-            <h1 className="text-3xl font-bold">Hi, {adminName} 👋</h1>
+            <h1 className="text-3xl font-bold">
+              Hi, {adminName} 👋
+            </h1>
             <p className="text-slate-500">Manage your quizzes</p>
           </div>
 
