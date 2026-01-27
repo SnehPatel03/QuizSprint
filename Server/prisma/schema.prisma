@@ -47,7 +47,7 @@ model Round {
   questions       Question[]
   quiz            Quiz           @relation(fields: [quizId], references: [id], onDelete: Cascade)
   roundAttempts   RoundAttempt[]
-  
+  roundStartTime  DateTime?   
   @@unique([quizId, roundNumber])
 }
 enum RoundStatus {

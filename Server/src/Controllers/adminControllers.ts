@@ -2,15 +2,6 @@ import { Request, Response } from "express";
 import { prisma } from "../lib/prisma";
 import { z } from "zod";
 
-interface RoundType {
-  title: string;
-  description: string;
-  startTime: string;
-  maxParticipants: number;
-  round2Players: number;
-  round3Players: number;
-}
-
 interface QuizResponse {
   message: string;
   quiz?: any;
@@ -27,6 +18,7 @@ const roundSchema = z.object({
   timeLimit2: z.number(),
   timeLimit3: z.number(),
 });
+
 
 export const createQuiz = async (req: any, res: Response<QuizResponse>) => {
   try {
@@ -51,11 +43,18 @@ export const createQuiz = async (req: any, res: Response<QuizResponse>) => {
       timeLimit3,
     } = parsed.data;
 
+    const quizStartTime = new Date(startTime);
+
+    
+    const round1StartTime = new Date(
+      quizStartTime.getTime() + 1 * 60 * 1000
+    );
+
     const quiz = await prisma.quiz.create({
       data: {
         title,
         description,
-        startTime: new Date(startTime),
+        startTime: quizStartTime,
         maxParticipants,
         round2Players,
         round3Players,
@@ -67,23 +66,26 @@ export const createQuiz = async (req: any, res: Response<QuizResponse>) => {
               roundNumber: 1,
               timeLimit: timeLimit1,
               maxParticipants,
+              roundStartTime: round1StartTime,
             },
             {
               roundNumber: 2,
               timeLimit: timeLimit2,
               maxParticipants: round2Players,
+              roundStartTime: null, // starts automatically after round 1
             },
             {
               roundNumber: 3,
               timeLimit: timeLimit3,
               maxParticipants: round3Players,
+              roundStartTime: null, // starts automatically after round 2
             },
           ],
         },
       },
       include: { rounds: true },
     });
-    console.log("created quiz", quiz);
+
     return res.status(201).json({
       message: "Quiz created successfully",
       quiz,
@@ -96,6 +98,7 @@ export const createQuiz = async (req: any, res: Response<QuizResponse>) => {
   }
 };
 
+/* ---------------- GET ALL QUIZ ---------------- */
 export const getAllQuiz = async (req: Request | any, res: Response) => {
   try {
     const quizzes = await prisma.quiz.findMany({
@@ -113,7 +116,7 @@ export const getAllQuiz = async (req: Request | any, res: Response) => {
         },
       },
       orderBy: {
-        createdAt: "desc",
+        createdAt: "desc", // ✅ FIXED
       },
     });
 
@@ -122,7 +125,7 @@ export const getAllQuiz = async (req: Request | any, res: Response) => {
       return {
         ...quiz,
         winner: winner?.user.name || null,
-        attempts: undefined, // Remove attempts from response
+        attempts: undefined,
       };
     });
 
@@ -136,6 +139,7 @@ export const getAllQuiz = async (req: Request | any, res: Response) => {
   }
 };
 
+/* ---------------- UPDATE QUIZ ---------------- */
 export const updateQuiz = async (req: any, res: any) => {
   try {
     const { id } = req.params;
@@ -164,7 +168,6 @@ export const updateQuiz = async (req: any, res: any) => {
       },
     });
 
-    // 2️⃣ Update rounds time limits
     await prisma.round.updateMany({
       where: { quizId: id, roundNumber: 1 },
       data: { timeLimit: Number(timeLimit1) },
@@ -194,9 +197,10 @@ export const updateQuiz = async (req: any, res: any) => {
   }
 };
 
+/* ---------------- DELETE QUIZ ---------------- */
 export const deleteQuiz = async (
   req: Request<{ id: string }>,
-  res: Response<QuizResponse>,
+  res: Response<QuizResponse>
 ) => {
   try {
     await prisma.quiz.delete({
@@ -209,5 +213,63 @@ export const deleteQuiz = async (
   } catch (error) {
     console.error("Delete Quiz Error:", error);
     return res.status(500).json({ message: "Error deleting quiz" });
+  }
+};
+
+
+// GET /user/quiz/:quizId/status
+export const getQuizStatus = async (req: Request | any, res: Response) => {
+  const { quizId } = req.params;
+
+  try {
+    const quiz = await prisma.quiz.findUnique({
+      where: { id: quizId },
+      include: {
+        rounds: {
+          where: { roundNumber: 1 },
+          take: 1,
+          select: {
+            roundStartTime: true,
+            timeLimit: true,
+            status: true,
+          },
+        },
+      },
+    });
+
+    if (!quiz) {
+      return res.status(404).json({ message: "Quiz not found" });
+    }
+
+    const round1 = quiz.rounds[0];
+
+    if (!round1) {
+      return res.status(400).json({ message: "Round 1 not configured yet" });
+    }
+
+    const now = new Date();
+
+    if (!round1.roundStartTime || now < new Date(round1.roundStartTime)) {
+      return res.json({
+        canJoin: false,
+        message: `Round 1 will start at ${round1.roundStartTime}`,
+        secondsLeft: Math.floor(
+          (new Date(round1.roundStartTime).getTime() - now.getTime()) / 1000 ),
+        quizStatus: quiz.status,
+        roundStatus: round1.status,
+      });
+    }
+
+    // Round 1 started
+    return res.json({
+      canJoin: true,
+      message: "You can join the quiz now",
+      quizStatus: quiz.status,
+      roundStatus: round1.status,
+      roundTimeLimit: round1.timeLimit,
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Internal server error" });
   }
 };

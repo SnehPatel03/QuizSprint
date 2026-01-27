@@ -26,12 +26,13 @@ const RoundResult = () => {
     return `${minutes}:${seconds.toString().padStart(2, "0")}`;
   };
 
-  // ---------------- FETCH ROUND RESULT ----------------
-  const fetchRoundResult = async () => {
+  // ================= FETCH ROUND RESULT =================
+  const fetchRoundResult = async (isInitial = false) => {
     try {
-      setLoading(true);
+      if (isInitial) setLoading(true);
+
       const res = await axios.get(
-        `https://quizsprint-fox0.onrender.com/user/roundresult/${roundId}`,
+        `http://localhost:3000/user/roundresult/${roundId}`,
         { withCredentials: true }
       );
 
@@ -39,26 +40,31 @@ const RoundResult = () => {
       setRoundTimeRemaining(res.data.roundTimeRemaining);
       setIsFinalRound(res.data.isFinalRound);
 
-      if (!res.data.roundOngoing) {
-        // Round ended: set leaderboard & buffer
-        setLeaderboard(res.data.leaderboard || []);
-        setMyStatus(res.data.myStatus || null);
-        setBufferTimeRemaining(res.data.bufferTimeRemaining || 0);
-        setCanStartNextRound(res.data.canStartNextRound || false);
+      if (!res.data.roundOngoing && res.data.leaderboard.length > 0) {
+        setLeaderboard(res.data.leaderboard);
+        setMyStatus(res.data.myStatus);
+        setBufferTimeRemaining(res.data.bufferTimeRemaining);
+        setCanStartNextRound(res.data.canStartNextRound);
       }
-    } catch (error) {
+    } catch (err) {
       toast.error("Failed to load round results");
     } finally {
-      setLoading(false);
+      if (isInitial) setLoading(false);
     }
   };
 
+  // ================= INITIAL LOAD + POLLING =================
   useEffect(() => {
-    fetchRoundResult();
-    // eslint-disable-next-line
+    fetchRoundResult(true); // show loader only once
+
+    const interval = setInterval(() => {
+      fetchRoundResult(false); // silent polling
+    }, 5000);
+
+    return () => clearInterval(interval);
   }, [roundId]);
 
-  // ---------------- ROUND COUNTDOWN ----------------
+  // ================= ROUND TIMER =================
   useEffect(() => {
     if (!roundOngoing || roundTimeRemaining <= 0) return;
 
@@ -66,7 +72,7 @@ const RoundResult = () => {
       setRoundTimeRemaining((prev) => {
         if (prev <= 1000) {
           clearInterval(roundTimerRef.current);
-          fetchRoundResult(); // fetch leaderboard after round ends
+          fetchRoundResult(false);
           return 0;
         }
         return prev - 1000;
@@ -76,7 +82,7 @@ const RoundResult = () => {
     return () => clearInterval(roundTimerRef.current);
   }, [roundOngoing, roundTimeRemaining]);
 
-  // ---------------- BUFFER COUNTDOWN ----------------
+  // ================= BUFFER TIMER =================
   useEffect(() => {
     if (bufferTimeRemaining <= 0 || isFinalRound) {
       if (bufferTimeRemaining <= 0 && !isFinalRound && myStatus?.qualified) {
@@ -99,68 +105,89 @@ const RoundResult = () => {
     return () => clearInterval(bufferTimerRef.current);
   }, [bufferTimeRemaining, isFinalRound, myStatus]);
 
-  // ---------------- AUTO NAVIGATE NEXT ROUND ----------------
+  // ================= AUTO NAVIGATE NEXT ROUND =================
   useEffect(() => {
     if (canStartNextRound && !isFinalRound && myStatus?.qualified) {
       const timer = setTimeout(() => {
-        navigate(`/quiz/${quizId}/round/${Number(roundNumber) + 1}/${roundId}`);
+        navigate(`/quiz/${quizId}/round/${Number(roundNumber) + 1}`);
       }, 1000);
       return () => clearTimeout(timer);
     }
-  }, [canStartNextRound, isFinalRound, myStatus, quizId, roundNumber, roundId, navigate]);
+  }, [canStartNextRound, isFinalRound, myStatus, quizId, roundNumber, navigate]);
 
-  // ---------------- MARK WINNER ----------------
+  // ================= MARK WINNER =================
   useEffect(() => {
     if (!isFinalRound || !leaderboard.length || !myStatus) return;
     if (leaderboard[0].userId === myStatus.userId) {
       axios
-        .post(`https://quizsprint-fox0.onrender.com/user/markWinner/${quizId}`, {}, { withCredentials: true })
+        .post(
+          `http://localhost:3000/user/markWinner/${quizId}`,
+          {},
+          { withCredentials: true }
+        )
         .catch(() => {});
     }
   }, [leaderboard, myStatus, isFinalRound, quizId]);
 
-  // ---------------- LOADING ----------------
+  // ================= LOADER =================
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 text-lg">
-        ⏳ Loading round data...
+      <div className="min-h-screen flex items-center justify-center text-lg">
+        ⏳ Loading...
       </div>
     );
   }
 
-  // ---------------- ROUND ONGOING UI ----------------
+  // ================= ROUND ONGOING =================
   if (roundOngoing) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 text-center p-6">
+      <div className="min-h-screen flex flex-col items-center justify-center text-center p-6">
         <div className="text-xl font-semibold mb-4">⏳ Round in Progress</div>
-        <div className="text-5xl font-bold text-blue-600">{formatTime(roundTimeRemaining)}</div>
-        <div className="mt-4 text-slate-500">Please wait until the round ends to see results</div>
+        <div className="text-5xl font-bold text-blue-600">
+          {formatTime(roundTimeRemaining)}
+        </div>
+        <div className="mt-4 text-slate-500">
+          Please wait until the round ends
+        </div>
       </div>
     );
   }
 
-  // ---------------- RESULTS & BUFFER ----------------
-  const isWinner = isFinalRound && leaderboard[0]?.userId === myStatus?.userId;
-  const showDashboardButton = (!myStatus?.qualified && !isFinalRound) || isWinner;
+  const isWinner =
+    isFinalRound && leaderboard[0]?.userId === myStatus?.userId;
 
+  const showDashboardButton =
+    (!myStatus?.qualified && !isFinalRound) || isWinner;
+
+  // ================= RESULT UI =================
   return (
     <div className="min-h-screen bg-slate-50 p-6">
       <div className="max-w-4xl mx-auto text-center">
-        <h1 className="text-3xl font-bold mb-2">Round {roundNumber} Results</h1>
-        <p className="text-slate-500 mb-6">{isFinalRound ? "Final Leaderboard" : "Leaderboard"}</p>
+        <h1 className="text-3xl font-bold mb-2">
+          Round {roundNumber} Results
+        </h1>
+        <p className="text-slate-500 mb-6">
+          {isFinalRound ? "Final Leaderboard" : "Leaderboard"}
+        </p>
 
         {myStatus && (
-          <div className={`mb-6 p-6 rounded-2xl font-semibold text-lg shadow ${
-            isWinner ? "bg-yellow-100 text-yellow-800" :
-            myStatus.qualified ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-          }`}>
-            {isWinner ? "🏆 You are the WINNER!" :
-              myStatus.qualified ? "🎉 Qualified for next round" :
-              "👏 Nice try! You are eliminated"}
+          <div
+            className={`mb-6 p-6 rounded-2xl font-semibold text-lg shadow ${
+              isWinner
+                ? "bg-yellow-100 text-yellow-800"
+                : myStatus.qualified
+                ? "bg-green-100 text-green-700"
+                : "bg-red-100 text-red-700"
+            }`}
+          >
+            {isWinner
+              ? "🏆 You are the WINNER!"
+              : myStatus.qualified
+              ? "🎉 Qualified for next round"
+              : "👏 Nice try! You are eliminated"}
           </div>
         )}
 
-        {/* LEADERBOARD TABLE */}
         <div className="bg-white rounded-2xl shadow overflow-hidden mb-6">
           <table className="w-full text-sm">
             <thead className="bg-slate-100">
@@ -177,26 +204,37 @@ const RoundResult = () => {
                   <td className="p-4 font-bold">{idx + 1}</td>
                   <td className="p-4 text-left">{user.name}</td>
                   <td className="p-4 font-semibold">{user.correctScore}</td>
-                  <td className="p-4">{formatTime(user.timeTaken)}</td>
+                  <td className="p-4">
+                    {formatTime(user.timeTaken)}
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
 
-        {/* BUFFER TIME */}
         {myStatus?.qualified && !isFinalRound && (
           <div className="mb-6">
             {bufferTimeRemaining > 0 ? (
               <div className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-6">
-                <div className="text-lg font-semibold text-blue-800 mb-2">⏳ Next Round Starting Soon</div>
-                <div className="text-4xl font-bold text-blue-600 mb-2">{formatTime(bufferTimeRemaining)}</div>
-                <div className="text-sm text-blue-600">Round {Number(roundNumber) + 1} will start automatically</div>
+                <div className="text-lg font-semibold text-blue-800 mb-2">
+                  ⏳ Next Round Starting Soon
+                </div>
+                <div className="text-4xl font-bold text-blue-600 mb-2">
+                  {formatTime(bufferTimeRemaining)}
+                </div>
+                <div className="text-sm text-blue-600">
+                  Round {Number(roundNumber) + 1} will start automatically
+                </div>
               </div>
             ) : (
               <div className="bg-green-50 border-2 border-green-200 rounded-2xl p-6">
-                <div className="text-lg font-semibold text-green-800 mb-2">✅ Round {Number(roundNumber) + 1} is Starting!</div>
-                <div className="text-sm text-green-600">Redirecting you to the next round...</div>
+                <div className="text-lg font-semibold text-green-800 mb-2">
+                  ✅ Next Round Starting!
+                </div>
+                <div className="text-sm text-green-600">
+                  Redirecting...
+                </div>
               </div>
             )}
           </div>

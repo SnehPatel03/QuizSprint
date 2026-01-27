@@ -12,6 +12,8 @@ import {
 } from "../Controllers/userControllers";
 import { authorize } from "../Middleware/authorize";
 import { updateQuizStatusMiddleware } from "../Middleware/quizStatusUpdate";
+import { getQuizStatus } from "../Controllers/adminControllers";
+
 
 const router = express.Router();
 
@@ -26,6 +28,7 @@ router.post("/submitRound/:roundId",submitRound)
 // router.get("/round/:roundId/status",getRoundStatus)
 router.get("/roundresult/:roundId",getRoundResult)
 router.post("/markWinner/:quizId", markWinner)
+router.get("quiz/:quizid/status",getQuizStatus)
 
 
 export default router

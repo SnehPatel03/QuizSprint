@@ -20,7 +20,7 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/adminDashboard" element={<AdminDashboard />} />
         <Route
-          path="/quiz/:quizId/round/:roundNumber"
+          path="/quiz/:quizId/round/:roundNumber/"
           element={<RoundPage />}
         />
          <Route

@@ -16,7 +16,7 @@ export const checkUserRoundTime = async (req: Request, res: Response, next: Next
       return res.status(404).json({ message: "Round not started for this user" });
     }
 
-    const roundEndTime = new Date(roundAttempt.createdAt.getTime() + roundAttempt.round.timeLimit * 1000);
+    const roundEndTime = new Date(roundAttempt.getTime() + roundAttempt.round.timeLimit * 1000);
     const now = new Date();
 
     if (now > roundEndTime || roundAttempt.round.status === "COMPLETED") {
