@@ -20,7 +20,7 @@ import UpdatePopUp from "../components/UpdatePopUp.jsx";
 import SetQuePopUp from "../components/SetQuePopUp.jsx";
 import QuizInfoPopup from "../components/QuizInfoPopup.jsx";
 import Navbar from "../components/Navbar.jsx";
-import { formatIST, getISTTimestamp } from "../utils/time.js"; // ✅ nuclear-safe time.js
+
 
 // ================== ADMIN DASHBOARD ==================
 const AdminDashboard = () => {
@@ -136,7 +136,7 @@ const AdminDashboard = () => {
 
           <div className="text-xs text-slate-500 flex items-center gap-2">
             <Calendar className="w-4 h-4" />
-            {formatIST(quiz.startTime)} {/* ✅ shows correct IST */}
+            {quiz.startTime} {/* ✅ shows correct IST */}
           </div>
 
           {getStatus(quiz.status) === "COMPLETED" && quiz.winner && (
