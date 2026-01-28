@@ -1,10 +1,13 @@
-// src/pages/RoundPage.jsx
-
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
-import { formatIST } from "../utils/time"; // ✅ import your time utility
+
+const formatIST = (utcTime) =>
+  new Date(utcTime).toLocaleString("en-IN", {
+    timeZone: "Asia/Kolkata",
+  });
+
 
 const RoundPage = () => {
   const { quizId, roundNumber } = useParams();

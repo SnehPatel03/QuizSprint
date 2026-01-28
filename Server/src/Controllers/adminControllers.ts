@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { prisma } from "../lib/prisma";
 import { z } from "zod";
+import { istToUTC,utcToIST, nowUTC } from "../utils/time";
 
 interface QuizResponse {
   message: string;
@@ -19,8 +20,7 @@ const roundSchema = z.object({
   timeLimit3: z.number(),
 });
 
-
-export const createQuiz = async (req: any, res: Response<QuizResponse>) => {
+export const createQuiz = async (req: any, res: Response) => {
   try {
     const parsed = roundSchema.safeParse(req.body);
 
@@ -43,9 +43,9 @@ export const createQuiz = async (req: any, res: Response<QuizResponse>) => {
       timeLimit3,
     } = parsed.data;
 
-    const quizStartTime = new Date(startTime);
 
-    
+    const quizStartTime = istToUTC(startTime);
+
     const round1StartTime = new Date(
       quizStartTime.getTime() + 2 * 60 * 1000
     );
@@ -72,13 +72,13 @@ export const createQuiz = async (req: any, res: Response<QuizResponse>) => {
               roundNumber: 2,
               timeLimit: timeLimit2,
               maxParticipants: round2Players,
-              roundStartTime: null, 
+              roundStartTime: null,
             },
             {
               roundNumber: 3,
               timeLimit: timeLimit3,
               maxParticipants: round3Players,
-              roundStartTime: null, 
+              roundStartTime: null,
             },
           ],
         },
@@ -214,7 +214,7 @@ export const deleteQuiz = async (
 };
 
 
-export const getQuizStatus = async (req: Request | any, res: Response) => {
+export const getQuizStatus = async (req: any, res: any) => {
   const { quizId } = req.params;
 
   try {
@@ -224,11 +224,6 @@ export const getQuizStatus = async (req: Request | any, res: Response) => {
         rounds: {
           where: { roundNumber: 1 },
           take: 1,
-          select: {
-            roundStartTime: true,
-            timeLimit: true,
-            status: true,
-          },
         },
       },
     });
@@ -238,21 +233,16 @@ export const getQuizStatus = async (req: Request | any, res: Response) => {
     }
 
     const round1 = quiz.rounds[0];
+    const now = nowUTC();
 
-    if (!round1) {
-      return res.status(400).json({ message: "Round 1 not configured yet" });
-    }
-
-    const now = new Date();
-
-    if (!round1.roundStartTime || now < new Date(round1.roundStartTime)) {
+    if (!round1?.roundStartTime || now < round1.roundStartTime) {
       return res.json({
         canJoin: false,
-        message: `Round 1 will start at ${round1.roundStartTime}`,
+        message: `Round 1 will start at ${utcToIST(round1.roundStartTime)}`,
         secondsLeft: Math.floor(
-          (new Date(round1.roundStartTime).getTime() - now.getTime()) / 1000 ),
+          (round1.roundStartTime.getTime() - now.getTime()) / 1000
+        ),
         quizStatus: quiz.status,
-        roundStatus: round1.status,
       });
     }
 
@@ -260,7 +250,6 @@ export const getQuizStatus = async (req: Request | any, res: Response) => {
       canJoin: true,
       message: "You can join the quiz now",
       quizStatus: quiz.status,
-      roundStatus: round1.status,
       roundTimeLimit: round1.timeLimit,
     });
   } catch (err) {

@@ -5,17 +5,6 @@ import { Play, Calendar, Zap, Crown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 
-/**
- * Convert backend UTC date/time → IST epoch (ms)
- * NOTE: Date.now() is already timezone-independent
- */
-const getISTTime = (utcTime) => {
-  return new Date(
-    new Date(utcTime).toLocaleString("en-US", {
-      timeZone: "Asia/Kolkata",
-    })
-  ).getTime();
-};
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -36,15 +25,15 @@ const Dashboard = () => {
       const [live, upcoming, completed] = await Promise.all([
         axios.get(
           "https://quizsprint-fox0.onrender.com/user/fetchQuizUserLive",
-          { withCredentials: true }
+          { withCredentials: true },
         ),
         axios.get(
           "https://quizsprint-fox0.onrender.com/user/fetchQuizUserUpcoming",
-          { withCredentials: true }
+          { withCredentials: true },
         ),
         axios.get(
           "https://quizsprint-fox0.onrender.com/user/fetchQuizUserCompleted",
-          { withCredentials: true }
+          { withCredentials: true },
         ),
       ]);
 
@@ -64,14 +53,12 @@ const Dashboard = () => {
 
   const handleJoinQuiz = async (quizId) => {
     if (joiningQuizId) return;
-
     setJoiningQuizId(quizId);
-
     try {
       const res = await axios.post(
         `https://quizsprint-fox0.onrender.com/user/joinQuiz/${quizId}`,
         {},
-        { withCredentials: true }
+        { withCredentials: true },
       );
 
       if (res.data.roundStarted) {
@@ -112,97 +99,88 @@ const Dashboard = () => {
     return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
   };
 
-  const QuizCard = ({ quiz, status }) => {
-    // Convert backend UTC → IST ONCE
-    const startTime = getISTTime(
-      quiz.round1StartTime || quiz.startTime
-    );
+ const QuizCard = ({ quiz, status }) => {
+  // ✅ USE UTC directly for logic
+  const startTimeMs = new Date(
+    quiz.round1StartTime || quiz.startTime
+  ).getTime();
 
-    const [timeLeft, setTimeLeft] = useState(
-      Math.max(0, Math.floor((startTime - Date.now()) / 1000))
-    );
+  const [timeLeft, setTimeLeft] = useState(
+    Math.max(0, Math.floor((startTimeMs - Date.now()) / 1000))
+  );
 
-    useEffect(() => {
-      if (timeLeft <= 0) return;
+  useEffect(() => {
+    if (timeLeft <= 0) return;
 
-      const t = setInterval(() => {
-        setTimeLeft(
-          Math.max(0, Math.floor((startTime - Date.now()) / 1000))
-        );
-      }, 1000);
+    const t = setInterval(() => {
+      setTimeLeft(
+        Math.max(0, Math.floor((startTimeMs - Date.now()) / 1000))
+      );
+    }, 1000);
 
-      return () => clearInterval(t);
-    }, [startTime]);
+    return () => clearInterval(t);
+  }, [startTimeMs]);
 
-    const started = Date.now() >= startTime;
+  const started = Date.now() >= startTimeMs;
 
-    return (
-      <div className="bg-white rounded-2xl p-5 shadow flex flex-col justify-between min-h-[190px]">
-        <div>
-          <div className="flex justify-between mb-2">
-            <h3 className="font-bold">{quiz.title}</h3>
-            <span className="text-xs px-3 py-1 bg-blue-100 rounded-full">
-              {status}
-            </span>
-          </div>
-
-          <p className="text-sm text-slate-600 mb-3">
-            {quiz.description}
-          </p>
-
-          {status === "LIVE" && (
-            <>
-              {!started ? (
-                <div className="text-sm text-red-600 font-semibold flex gap-2 items-center">
-                  <Play className="animate-pulse" />
-                  Starts in {formatTime(timeLeft)}
-                </div>
-              ) : (
-                <div className="text-sm text-green-600 font-semibold flex gap-2 items-center">
-                  <Play />
-                  Live Now
-                </div>
-              )}
-            </>
-          )}
-
-          {status === "UPCOMING" && (
-            <div className="text-sm text-slate-500 flex gap-2 items-center">
-              <Calendar />
-              {new Date(startTime).toLocaleString("en-IN", {
-                timeZone: "Asia/Kolkata",
-              })}
-            </div>
-          )}
+  return (
+    <div className="bg-white rounded-2xl p-5 shadow flex flex-col justify-between min-h-[190px]">
+      <div>
+        <div className="flex justify-between mb-2">
+          <h3 className="font-bold">{quiz.title}</h3>
+          <span className="text-xs px-3 py-1 bg-blue-100 rounded-full">
+            {status}
+          </span>
         </div>
 
+        <p className="text-sm text-slate-600 mb-3">{quiz.description}</p>
+
         {status === "LIVE" && (
-          <button
-            disabled={!started || joiningQuizId === quiz.id}
-            onClick={() => handleJoinQuiz(quiz.id)}
-            className={`mt-4 py-2 rounded-xl text-white font-semibold ${
-              !started
-                ? "bg-gray-400"
-                : "bg-red-500 hover:bg-red-600"
-            }`}
-          >
-            {!started
-              ? "Round Not Started"
-              : joiningQuizId === quiz.id
-              ? "Joining..."
-              : "Join Quiz"}
-          </button>
+          <>
+            {!started ? (
+              <div className="text-sm text-red-600 font-semibold flex gap-2 items-center">
+                <Play className="animate-pulse" />
+                Starts in {formatTime(timeLeft)}
+              </div>
+            ) : (
+              <div className="text-sm text-green-600 font-semibold flex gap-2 items-center">
+                <Play />
+                Live Now
+              </div>
+            )}
+          </>
         )}
 
-        {status === "COMPLETED" && quiz.winner && (
-          <div className="text-xs mt-2 flex gap-2 items-center">
-            <Crown className="text-yellow-500" />
-            Winner: {quiz.winner}
+        {status === "UPCOMING" && (
+          <div className="text-sm text-slate-500 flex gap-2 items-center">
+            <Calendar />
+            {/* ✅ IST only for display */}
+            {new Date(startTimeMs).toLocaleString("en-IN", {
+              timeZone: "Asia/Kolkata",
+            })}
           </div>
         )}
       </div>
-    );
-  };
+
+      {status === "LIVE" && (
+        <button
+          disabled={!started || joiningQuizId === quiz.id}
+          onClick={() => handleJoinQuiz(quiz.id)}
+          className={`mt-4 py-2 rounded-xl text-white font-semibold ${
+            !started ? "bg-gray-400" : "bg-red-500 hover:bg-red-600"
+          }`}
+        >
+          {!started
+            ? "Round Not Started"
+            : joiningQuizId === quiz.id
+            ? "Joining..."
+            : "Join Quiz"}
+        </button>
+      )}
+    </div>
+  );
+};
+
 
   if (loading) {
     return (
@@ -223,9 +201,7 @@ const Dashboard = () => {
         </h1>
 
         <section className="mb-8">
-          <h2 className="text-xl font-bold mb-4">
-            Live Quizzes
-          </h2>
+          <h2 className="text-xl font-bold mb-4">Live Quizzes</h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {liveQuizzes.map((q) => (
               <QuizCard key={q.id} quiz={q} status="LIVE" />
@@ -234,9 +210,7 @@ const Dashboard = () => {
         </section>
 
         <section className="mb-8">
-          <h2 className="text-xl font-bold mb-4">
-            Upcoming Quizzes
-          </h2>
+          <h2 className="text-xl font-bold mb-4">Upcoming Quizzes</h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {upcomingQuizzes.map((q) => (
               <QuizCard key={q.id} quiz={q} status="UPCOMING" />
@@ -245,9 +219,7 @@ const Dashboard = () => {
         </section>
 
         <section>
-          <h2 className="text-xl font-bold mb-4">
-            Completed Quizzes
-          </h2>
+          <h2 className="text-xl font-bold mb-4">Completed Quizzes</h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {completedQuizzes.map((q) => (
               <QuizCard key={q.id} quiz={q} status="COMPLETED" />

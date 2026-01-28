@@ -1,11 +1,13 @@
 import { prisma } from "../lib/prisma";
 import { calculateRoundQualification } from "./QualificationLogic";
 import { getQuestionsByRound } from "./questionControllers";
+import {nowUTC} from '../utils/time'
 
 const BUFFER_MS = 2 * 60 * 1000; 
 
+
 const autoUpdateQuizStatus = async () => {
-  const now = new Date();
+  const now = nowUTC(); 
 
   await prisma.quiz.updateMany({
     where: {
@@ -21,10 +23,11 @@ const autoUpdateQuizStatus = async () => {
   });
 };
 
+export default autoUpdateQuizStatus;
+
 export const getAllQuizUserUpcoming = async (req: any, res: any) => {
   try {
-    await autoUpdateQuizStatus(); // 🔥 ADD THIS
-
+    await autoUpdateQuizStatus(); 
     const quizzes = await prisma.quiz.findMany({
       where: { status: "DRAFT" },
     });
@@ -57,7 +60,7 @@ export const getAllQuizUserLive = async (req: any, res: any) => {
     return res.status(500).json({ message: "Error fetching live quizzes" });
   }
 };
-  
+
 
 export const fetchCompletedQuizzes = async (req: any, res: any) => {
   try {
@@ -92,7 +95,6 @@ export const fetchCompletedQuizzes = async (req: any, res: any) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
-
 export const joinQuiz = async (req: any, res: any) => {
   try {
     const { quizId } = req.params;
@@ -102,7 +104,10 @@ export const joinQuiz = async (req: any, res: any) => {
     if (!quiz) return res.status(404).json({ message: "Quiz not found" });
     if (quiz.status !== "LIVE") return res.status(400).json({ message: "Quiz is not live" });
 
-    const round1 = await prisma.round.findFirst({ where: { quizId, roundNumber: 1 } });
+    const round1 = await prisma.round.findFirst({
+      where: { quizId, roundNumber: 1 },
+    });
+
     if (!round1 || !round1.roundStartTime) {
       return res.status(200).json({
         roundStarted: false,
@@ -110,33 +115,37 @@ export const joinQuiz = async (req: any, res: any) => {
       });
     }
 
-    const now = Date.now();
+    const nowMs = nowUTC().getTime();
     const roundStart = round1.roundStartTime.getTime();
     const roundEnd = roundStart + round1.timeLimit * 60 * 1000;
 
-    // Round not started yet
-    if (now < roundStart) {
+    if (nowMs < roundStart) {
       return res.status(200).json({
         roundStarted: false,
         message: "Round not started yet",
-        startsInMs: roundStart - now,
+        startsInMs: roundStart - nowMs,
         timeLimit: round1.timeLimit,
       });
     }
 
-    if (now > roundEnd) {
+    if (nowMs > roundEnd) {
       return res.status(403).json({ message: "Round 1 already ended" });
     }
 
     const count = await prisma.quizAttempt.count({ where: { quizId } });
-    if (count >= quiz.maxParticipants) return res.status(400).json({ message: "Quiz is full" });
+    if (count >= quiz.maxParticipants)
+      return res.status(400).json({ message: "Quiz is full" });
 
     const alreadyJoined = await prisma.quizAttempt.findUnique({
       where: { userId_quizId: { userId, quizId } },
     });
-    if (alreadyJoined) return res.status(200).json({ roundStarted: true, message: "Already joined" });
 
-    await prisma.quizAttempt.create({ data: { userId, quizId } });
+    if (alreadyJoined)
+      return res.status(200).json({ roundStarted: true, message: "Already joined" });
+
+    await prisma.quizAttempt.create({
+      data: { userId, quizId },
+    });
 
     return res.status(200).json({ roundStarted: true, message: "Joined successfully" });
   } catch (err) {

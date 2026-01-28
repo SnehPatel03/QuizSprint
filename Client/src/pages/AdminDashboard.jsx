@@ -37,7 +37,7 @@ const AdminDashboard = () => {
       setLoading(true);
       const res = await axios.get(
         "https://quizsprint-fox0.onrender.com/admin/fetchQuiz",
-        { withCredentials: true }
+        { withCredentials: true },
       );
       setQuizzes(res.data.quiz || []);
       setAdminName(localStorage.getItem("name") || "Admin");
@@ -57,7 +57,7 @@ const AdminDashboard = () => {
   const draftQuizzes = quizzes.filter((q) => getStatus(q.status) === "DRAFT");
   const liveQuizzes = quizzes.filter((q) => getStatus(q.status) === "LIVE");
   const completedQuizzes = quizzes.filter(
-    (q) => getStatus(q.status) === "COMPLETED"
+    (q) => getStatus(q.status) === "COMPLETED",
   );
 
   const QuizCard = ({ quiz }) => {
@@ -80,7 +80,7 @@ const AdminDashboard = () => {
       try {
         await axios.delete(
           `https://quizsprint-fox0.onrender.com/admin/deleteQuiz/${quiz.id}`,
-          { withCredentials: true }
+          { withCredentials: true },
         );
         setQuizzes((prev) => prev.filter((q) => q.id !== quiz.id));
         toast.success("Quiz deleted");
@@ -128,13 +128,13 @@ const AdminDashboard = () => {
             </span>
           </div>
 
-          <p className="text-sm text-slate-600 mb-3">
-            {quiz.description}
-          </p>
+          <p className="text-sm text-slate-600 mb-3">{quiz.description}</p>
 
           <div className="text-xs text-slate-500 flex items-center gap-2">
             <Calendar className="w-4 h-4" />
-            {new Date(quiz.startTime).toLocaleString()}
+            {new Date(quiz.startTime).toLocaleString("en-IN", {
+              timeZone: "Asia/Kolkata",
+            })}
           </div>
 
           {getStatus(quiz.status) === "COMPLETED" && quiz.winner && (
@@ -181,7 +181,6 @@ const AdminDashboard = () => {
     );
   };
 
-  // ================= QUIZ SECTION =================
   const QuizSection = ({ title, data, icon }) => (
     <div className="mb-10">
       <div className="flex items-center gap-3 mb-4">
@@ -223,9 +222,7 @@ const AdminDashboard = () => {
       <div className="min-h-screen bg-slate-50 px-6 py-8">
         <div className="flex justify-between items-center mb-10">
           <div>
-            <h1 className="text-3xl font-bold">
-              Hi, {adminName} 👋
-            </h1>
+            <h1 className="text-3xl font-bold">Hi, {adminName} 👋</h1>
             <p className="text-slate-500">Manage your quizzes</p>
           </div>
 
@@ -239,7 +236,10 @@ const AdminDashboard = () => {
         </div>
 
         {showCreatePopup && (
-          <PopUp onClose={() => setShowCreatePopup(false)} onSuccess={fetchQuizzes} />
+          <PopUp
+            onClose={() => setShowCreatePopup(false)}
+            onSuccess={fetchQuizzes}
+          />
         )}
         {showUpdatePopup && editingQuiz && (
           <UpdatePopUp
@@ -262,9 +262,17 @@ const AdminDashboard = () => {
           />
         )}
 
-        <QuizSection title="Draft Quizzes" data={draftQuizzes} icon={<FileText />} />
+        <QuizSection
+          title="Draft Quizzes"
+          data={draftQuizzes}
+          icon={<FileText />}
+        />
         <QuizSection title="Live Quizzes" data={liveQuizzes} icon={<Play />} />
-        <QuizSection title="Completed Quizzes" data={completedQuizzes} icon={<Trophy />} />
+        <QuizSection
+          title="Completed Quizzes"
+          data={completedQuizzes}
+          icon={<Trophy />}
+        />
       </div>
     </>
   );

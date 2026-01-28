@@ -4,7 +4,12 @@ import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
-import { formatIST } from "../utils/time"; // ✅ import your time utility
+
+const formatIST = (utcTime) =>
+  new Date(utcTime).toLocaleString("en-IN", {
+    timeZone: "Asia/Kolkata",
+  });
+
 
 const RoundResult = () => {
   const { roundId, quizId, roundNumber } = useParams();
@@ -37,7 +42,7 @@ const RoundResult = () => {
 
       const res = await axios.get(
         `https://quizsprint-fox0.onrender.com/user/roundresult/${roundId}`,
-        { withCredentials: true }
+        { withCredentials: true },
       );
 
       setRoundOngoing(res.data.roundOngoing);
@@ -121,7 +126,14 @@ const RoundResult = () => {
       }, 1000);
       return () => clearTimeout(timer);
     }
-  }, [canStartNextRound, isFinalRound, myStatus, quizId, roundNumber, navigate]);
+  }, [
+    canStartNextRound,
+    isFinalRound,
+    myStatus,
+    quizId,
+    roundNumber,
+    navigate,
+  ]);
 
   // ================= MARK WINNER =================
   useEffect(() => {
@@ -131,7 +143,7 @@ const RoundResult = () => {
         .post(
           `https://quizsprint-fox0.onrender.com/user/markWinner/${quizId}`,
           {},
-          { withCredentials: true }
+          { withCredentials: true },
         )
         .catch(() => {});
     }
@@ -159,13 +171,14 @@ const RoundResult = () => {
         <div className="text-5xl font-bold text-blue-600">
           {formatTime(roundTimeRemaining)}
         </div>
-        <div className="mt-4 text-slate-500">Please wait until the round ends</div>
+        <div className="mt-4 text-slate-500">
+          Please wait until the round ends
+        </div>
       </div>
     );
   }
 
-  const isWinner =
-    isFinalRound && leaderboard[0]?.userId === myStatus?.userId;
+  const isWinner = isFinalRound && leaderboard[0]?.userId === myStatus?.userId;
 
   const showDashboardButton =
     (!myStatus?.qualified && !isFinalRound) || isWinner;
@@ -190,15 +203,15 @@ const RoundResult = () => {
               isWinner
                 ? "bg-yellow-100 text-yellow-800"
                 : myStatus.qualified
-                ? "bg-green-100 text-green-700"
-                : "bg-red-100 text-red-700"
+                  ? "bg-green-100 text-green-700"
+                  : "bg-red-100 text-red-700"
             }`}
           >
             {isWinner
               ? "🏆 You are the WINNER!"
               : myStatus.qualified
-              ? "🎉 Qualified for next round"
-              : "👏 Nice try! You are eliminated"}
+                ? "🎉 Qualified for next round"
+                : "👏 Nice try! You are eliminated"}
           </div>
         )}
 
