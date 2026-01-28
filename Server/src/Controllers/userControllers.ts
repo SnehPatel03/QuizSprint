@@ -4,15 +4,33 @@ import { getQuestionsByRound } from "./questionControllers";
 
 const BUFFER_MS = 2 * 60 * 1000; 
 
+const autoUpdateQuizStatus = async () => {
+  const now = new Date();
+
+  await prisma.quiz.updateMany({
+    where: {
+      status: "DRAFT",
+      rounds: {
+        some: {
+          roundNumber: 1,
+          roundStartTime: { lte: now },
+        },
+      },
+    },
+    data: { status: "LIVE" },
+  });
+};
 
 export const getAllQuizUserUpcoming = async (req: any, res: any) => {
   try {
+    await autoUpdateQuizStatus(); // 🔥 ADD THIS
+
     const quizzes = await prisma.quiz.findMany({
       where: { status: "DRAFT" },
     });
 
     return res.status(200).json({
-      message: "Quizzes fetched successfully for users Upcoming quizzes",
+      message: "Upcoming quizzes fetched successfully",
       quiz: quizzes,
     });
   } catch (error) {
@@ -21,14 +39,17 @@ export const getAllQuizUserUpcoming = async (req: any, res: any) => {
   }
 };
 
+
 export const getAllQuizUserLive = async (req: any, res: any) => {
   try {
+    await autoUpdateQuizStatus(); // 🔥 ADD THIS
+
     const quizzes = await prisma.quiz.findMany({
       where: { status: "LIVE" },
     });
 
     return res.status(200).json({
-      message: "Quizzes fetched successfully for users LIVE quizzes",
+      message: "Live quizzes fetched successfully",
       quiz: quizzes,
     });
   } catch (error) {
@@ -36,6 +57,7 @@ export const getAllQuizUserLive = async (req: any, res: any) => {
     return res.status(500).json({ message: "Error fetching live quizzes" });
   }
 };
+  
 
 export const fetchCompletedQuizzes = async (req: any, res: any) => {
   try {
