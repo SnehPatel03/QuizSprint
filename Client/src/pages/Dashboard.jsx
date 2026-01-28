@@ -6,7 +6,8 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 
 /**
- * Convert any UTC date/time to IST timestamp (ms)
+ * Convert backend UTC date/time → IST epoch (ms)
+ * NOTE: Date.now() is already timezone-independent
  */
 const getISTTime = (utcTime) => {
   return new Date(
@@ -33,9 +34,18 @@ const Dashboard = () => {
     setLoading(true);
     try {
       const [live, upcoming, completed] = await Promise.all([
-        axios.get("https://quizsprint-fox0.onrender.com/user/fetchQuizUserLive", { withCredentials: true }),
-        axios.get("https://quizsprint-fox0.onrender.com/user/fetchQuizUserUpcoming", { withCredentials: true }),
-        axios.get("https://quizsprint-fox0.onrender.com/user/fetchQuizUserCompleted", { withCredentials: true }),
+        axios.get(
+          "https://quizsprint-fox0.onrender.com/user/fetchQuizUserLive",
+          { withCredentials: true }
+        ),
+        axios.get(
+          "https://quizsprint-fox0.onrender.com/user/fetchQuizUserUpcoming",
+          { withCredentials: true }
+        ),
+        axios.get(
+          "https://quizsprint-fox0.onrender.com/user/fetchQuizUserCompleted",
+          { withCredentials: true }
+        ),
       ]);
 
       setLiveQuizzes(live.data.quiz || []);
@@ -103,10 +113,13 @@ const Dashboard = () => {
   };
 
   const QuizCard = ({ quiz, status }) => {
-    const startTime = getISTTime(quiz.round1StartTime || quiz.startTime);
+    // Convert backend UTC → IST ONCE
+    const startTime = getISTTime(
+      quiz.round1StartTime || quiz.startTime
+    );
 
     const [timeLeft, setTimeLeft] = useState(
-      Math.max(0, Math.floor((startTime - getISTTime(new Date())) / 1000))
+      Math.max(0, Math.floor((startTime - Date.now()) / 1000))
     );
 
     useEffect(() => {
@@ -114,24 +127,28 @@ const Dashboard = () => {
 
       const t = setInterval(() => {
         setTimeLeft(
-          Math.max(0, Math.floor((startTime - getISTTime(new Date())) / 1000))
+          Math.max(0, Math.floor((startTime - Date.now()) / 1000))
         );
       }, 1000);
 
       return () => clearInterval(t);
     }, [startTime]);
 
-    const started = getISTTime(new Date()) >= startTime;
+    const started = Date.now() >= startTime;
 
     return (
       <div className="bg-white rounded-2xl p-5 shadow flex flex-col justify-between min-h-[190px]">
         <div>
           <div className="flex justify-between mb-2">
             <h3 className="font-bold">{quiz.title}</h3>
-            <span className="text-xs px-3 py-1 bg-blue-100 rounded-full">{status}</span>
+            <span className="text-xs px-3 py-1 bg-blue-100 rounded-full">
+              {status}
+            </span>
           </div>
 
-          <p className="text-sm text-slate-600 mb-3">{quiz.description}</p>
+          <p className="text-sm text-slate-600 mb-3">
+            {quiz.description}
+          </p>
 
           {status === "LIVE" && (
             <>
@@ -164,7 +181,9 @@ const Dashboard = () => {
             disabled={!started || joiningQuizId === quiz.id}
             onClick={() => handleJoinQuiz(quiz.id)}
             className={`mt-4 py-2 rounded-xl text-white font-semibold ${
-              !started ? "bg-gray-400" : "bg-red-500 hover:bg-red-600"
+              !started
+                ? "bg-gray-400"
+                : "bg-red-500 hover:bg-red-600"
             }`}
           >
             {!started
@@ -204,7 +223,9 @@ const Dashboard = () => {
         </h1>
 
         <section className="mb-8">
-          <h2 className="text-xl font-bold mb-4">Live Quizzes</h2>
+          <h2 className="text-xl font-bold mb-4">
+            Live Quizzes
+          </h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {liveQuizzes.map((q) => (
               <QuizCard key={q.id} quiz={q} status="LIVE" />
@@ -213,7 +234,9 @@ const Dashboard = () => {
         </section>
 
         <section className="mb-8">
-          <h2 className="text-xl font-bold mb-4">Upcoming Quizzes</h2>
+          <h2 className="text-xl font-bold mb-4">
+            Upcoming Quizzes
+          </h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {upcomingQuizzes.map((q) => (
               <QuizCard key={q.id} quiz={q} status="UPCOMING" />
@@ -222,7 +245,9 @@ const Dashboard = () => {
         </section>
 
         <section>
-          <h2 className="text-xl font-bold mb-4">Completed Quizzes</h2>
+          <h2 className="text-xl font-bold mb-4">
+            Completed Quizzes
+          </h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {completedQuizzes.map((q) => (
               <QuizCard key={q.id} quiz={q} status="COMPLETED" />
