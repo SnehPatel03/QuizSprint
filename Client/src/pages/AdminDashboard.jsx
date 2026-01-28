@@ -37,7 +37,7 @@ const AdminDashboard = () => {
       setLoading(true);
       const res = await axios.get(
         "https://quizsprint-fox0.onrender.com/admin/fetchQuiz",
-        { withCredentials: true },
+        { withCredentials: true }
       );
       setQuizzes(res.data.quiz || []);
       setAdminName(localStorage.getItem("name") || "Admin");
@@ -57,8 +57,16 @@ const AdminDashboard = () => {
   const draftQuizzes = quizzes.filter((q) => getStatus(q.status) === "DRAFT");
   const liveQuizzes = quizzes.filter((q) => getStatus(q.status) === "LIVE");
   const completedQuizzes = quizzes.filter(
-    (q) => getStatus(q.status) === "COMPLETED",
+    (q) => getStatus(q.status) === "COMPLETED"
   );
+
+  // ✅ SINGLE, CORRECT DATE FORMATTER (UTC → IST automatically)
+  const formatIST = (dateString) => {
+    return new Date(dateString).toLocaleString("en-IN", {
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
+  };
 
   const QuizCard = ({ quiz }) => {
     const [deleting, setDeleting] = useState(false);
@@ -80,7 +88,7 @@ const AdminDashboard = () => {
       try {
         await axios.delete(
           `https://quizsprint-fox0.onrender.com/admin/deleteQuiz/${quiz.id}`,
-          { withCredentials: true },
+          { withCredentials: true }
         );
         setQuizzes((prev) => prev.filter((q) => q.id !== quiz.id));
         toast.success("Quiz deleted");
@@ -128,13 +136,13 @@ const AdminDashboard = () => {
             </span>
           </div>
 
-          <p className="text-sm text-slate-600 mb-3">{quiz.description}</p>
+          <p className="text-sm text-slate-600 mb-3">
+            {quiz.description}
+          </p>
 
           <div className="text-xs text-slate-500 flex items-center gap-2">
             <Calendar className="w-4 h-4" />
-            {new Date(quiz.startTime).toLocaleString("en-IN", {
-              timeZone: "Asia/Kolkata",
-            })}
+            {formatIST(quiz.startTime)}
           </div>
 
           {getStatus(quiz.status) === "COMPLETED" && quiz.winner && (
@@ -241,6 +249,7 @@ const AdminDashboard = () => {
             onSuccess={fetchQuizzes}
           />
         )}
+
         {showUpdatePopup && editingQuiz && (
           <UpdatePopUp
             quiz={editingQuiz}
@@ -248,6 +257,7 @@ const AdminDashboard = () => {
             onSuccess={fetchQuizzes}
           />
         )}
+
         {showQuePopup && editingQuiz && (
           <SetQuePopUp
             quiz={editingQuiz}
@@ -255,6 +265,7 @@ const AdminDashboard = () => {
             onSuccess={fetchQuizzes}
           />
         )}
+
         {showInfoPopup && editingQuiz && (
           <QuizInfoPopup
             quiz={editingQuiz}
