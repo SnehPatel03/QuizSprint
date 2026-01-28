@@ -41,7 +41,8 @@ const PopUp = ({ onClose, onSuccess }) => {
           maxParticipants: Number(formData.maxParticipants),
           round2Players: Number(formData.round2Players),
           round3Players: Number(formData.round3Players),
-          startTime: formData.startTime,
+          // datetime-local has no timezone; convert from user's local time to ISO (UTC)
+          startTime: new Date(formData.startTime).toISOString(),
           timeLimit1: Number(formData.timeLimit1),
           timeLimit2: Number(formData.timeLimit2),
           timeLimit3: Number(formData.timeLimit3),

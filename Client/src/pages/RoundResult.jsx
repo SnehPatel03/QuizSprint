@@ -36,10 +36,9 @@ const RoundResult = () => {
   };
 
   // ================= FETCH ROUND RESULT =================
-  const fetchRoundResult = async (isInitial = false) => {
+  // Note: we don't toggle the page loader during polling to avoid flicker.
+  const fetchRoundResult = async () => {
     try {
-      if (isInitial) setLoading(true);
-
       const res = await axios.get(
         `https://quizsprint-fox0.onrender.com/user/roundresult/${roundId}`,
         { withCredentials: true },
@@ -61,20 +60,26 @@ const RoundResult = () => {
       }
     } catch (err) {
       toast.error("Failed to load round results");
-    } finally {
-      if (isInitial) setLoading(false);
     }
   };
 
   // ================= INITIAL LOAD + POLLING =================
   useEffect(() => {
-    fetchRoundResult(true); // show loader only once
+    let mounted = true;
+    setLoading(true);
+    fetchRoundResult()
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
 
     const interval = setInterval(() => {
-      fetchRoundResult(false); // silent polling
+      fetchRoundResult(); // silent polling
     }, 5000);
 
-    return () => clearInterval(interval);
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+    };
   }, [roundId]);
 
   // ================= ROUND TIMER =================
@@ -85,7 +90,7 @@ const RoundResult = () => {
       setRoundTimeRemaining((prev) => {
         if (prev <= 1000) {
           clearInterval(roundTimerRef.current);
-          fetchRoundResult(false);
+          fetchRoundResult();
           return 0;
         }
         return prev - 1000;

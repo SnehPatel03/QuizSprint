@@ -26,6 +26,13 @@ const UpdatePopUp = ({ onClose, onSuccess, quiz }) => {
   useEffect(() => {
     if (!quiz) return;
 
+    const toDatetimeLocalValue = (dateString) => {
+      const d = new Date(dateString);
+      // Convert to local "datetime-local" string (no timezone)
+      d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+      return d.toISOString().slice(0, 16);
+    };
+
     setFormData({
       title: quiz.title || "",
       description: quiz.description || "",
@@ -33,7 +40,7 @@ const UpdatePopUp = ({ onClose, onSuccess, quiz }) => {
       round2Players: quiz.round2Players ?? "",
       round3Players: quiz.round3Players ?? "",
       startTime: quiz.startTime
-        ? new Date(quiz.startTime).toISOString().slice(0, 16)
+        ? toDatetimeLocalValue(quiz.startTime)
         : "",
       timeLimit1: quiz.timeLimit1 ?? "",
       timeLimit2: quiz.timeLimit2 ?? "",
@@ -81,7 +88,8 @@ const UpdatePopUp = ({ onClose, onSuccess, quiz }) => {
           maxParticipants: Number(formData.maxParticipants),
           round2Players: Number(formData.round2Players),
           round3Players: Number(formData.round3Players),
-          startTime: formData.startTime,
+          // datetime-local has no timezone; convert from user's local time to ISO (UTC)
+          startTime: new Date(formData.startTime).toISOString(),
           timeLimit1: Number(formData.timeLimit1),
           timeLimit2: Number(formData.timeLimit2),
           timeLimit3: Number(formData.timeLimit3),
