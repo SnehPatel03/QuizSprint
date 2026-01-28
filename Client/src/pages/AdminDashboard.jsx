@@ -32,7 +32,6 @@ const AdminDashboard = () => {
   const [showInfoPopup, setShowInfoPopup] = useState(false);
   const [editingQuiz, setEditingQuiz] = useState(null);
 
-  // ================= FETCH QUIZZES =================
   const fetchQuizzes = async () => {
     try {
       setLoading(true);
@@ -61,7 +60,6 @@ const AdminDashboard = () => {
     (q) => getStatus(q.status) === "COMPLETED"
   );
 
-  // ================= QUIZ CARD =================
   const QuizCard = ({ quiz }) => {
     const [deleting, setDeleting] = useState(false);
 

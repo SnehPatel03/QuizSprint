@@ -5,6 +5,17 @@ import { Play, Calendar, Zap, Crown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 
+/**
+ * Convert any UTC date/time to IST timestamp (ms)
+ */
+const getISTTime = (utcTime) => {
+  return new Date(
+    new Date(utcTime).toLocaleString("en-US", {
+      timeZone: "Asia/Kolkata",
+    })
+  ).getTime();
+};
+
 const Dashboard = () => {
   const navigate = useNavigate();
 
@@ -14,27 +25,17 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(false);
   const [joiningQuizId, setJoiningQuizId] = useState(null);
 
-  // ================= POPUP STATES =================
   const [showPopup, setShowPopup] = useState(false);
   const [popupTimeLeft, setPopupTimeLeft] = useState(0);
   const [popupQuizId, setPopupQuizId] = useState(null);
 
-  // ================= FETCH QUIZZES =================
   const fetchQuizzes = async () => {
     setLoading(true);
     try {
       const [live, upcoming, completed] = await Promise.all([
-        axios.get("https://quizsprint-fox0.onrender.com/user/fetchQuizUserLive", {
-          withCredentials: true,
-        }),
-        axios.get(
-          "https://quizsprint-fox0.onrender.com/user/fetchQuizUserUpcoming",
-          { withCredentials: true }
-        ),
-        axios.get(
-          "https://quizsprint-fox0.onrender.com/user/fetchQuizUserCompleted",
-          { withCredentials: true }
-        ),
+        axios.get("https://quizsprint-fox0.onrender.com/user/fetchQuizUserLive", { withCredentials: true }),
+        axios.get("https://quizsprint-fox0.onrender.com/user/fetchQuizUserUpcoming", { withCredentials: true }),
+        axios.get("https://quizsprint-fox0.onrender.com/user/fetchQuizUserCompleted", { withCredentials: true }),
       ]);
 
       setLiveQuizzes(live.data.quiz || []);
@@ -51,7 +52,6 @@ const Dashboard = () => {
     fetchQuizzes();
   }, []);
 
-  // ================= JOIN QUIZ =================
   const handleJoinQuiz = async (quizId) => {
     if (joiningQuizId) return;
 
@@ -79,7 +79,6 @@ const Dashboard = () => {
     }
   };
 
-  // ================= POPUP TIMER =================
   useEffect(() => {
     if (!showPopup || popupTimeLeft <= 0) return;
 
@@ -97,69 +96,49 @@ const Dashboard = () => {
     return () => clearInterval(interval);
   }, [showPopup, popupQuizId]);
 
-  // ================= FORMAT TIME FUNCTION =================
-  const formatTimeInMinutes = (seconds) => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    
-    if (minutes === 0) {
-      return `${remainingSeconds} sec`;
-    } else if (remainingSeconds === 0) {
-      return `${minutes} min`;
-    } else {
-      return `${minutes} min ${remainingSeconds} sec`;
-    }
-  };
-
-  const formatTimeMMSS = (seconds) => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${String(minutes).padStart(2, "0")}:${String(remainingSeconds).padStart(2, "0")}`;
+  const formatTime = (seconds) => {
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60);
+    return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
   };
 
   const QuizCard = ({ quiz, status }) => {
-    const startTime = new Date(
-      quiz.round1StartTime || quiz.startTime
-    ).getTime();
+    const startTime = getISTTime(quiz.round1StartTime || quiz.startTime);
 
     const [timeLeft, setTimeLeft] = useState(
-      Math.max(0, Math.floor((startTime - Date.now()) / 1000))
+      Math.max(0, Math.floor((startTime - getISTTime(new Date())) / 1000))
     );
 
     useEffect(() => {
-      const interval = setInterval(() => {
-        const diff = Math.max(
-          0,
-          Math.floor((startTime - Date.now()) / 1000)
+      if (timeLeft <= 0) return;
+
+      const t = setInterval(() => {
+        setTimeLeft(
+          Math.max(0, Math.floor((startTime - getISTTime(new Date())) / 1000))
         );
-        setTimeLeft(diff);
       }, 1000);
 
-      return () => clearInterval(interval);
+      return () => clearInterval(t);
     }, [startTime]);
 
-    const started = Date.now() >= startTime;
+    const started = getISTTime(new Date()) >= startTime;
 
     return (
       <div className="bg-white rounded-2xl p-5 shadow flex flex-col justify-between min-h-[190px]">
         <div>
           <div className="flex justify-between mb-2">
             <h3 className="font-bold">{quiz.title}</h3>
-            <span className="text-xs px-3 py-1 bg-blue-100 rounded-full">
-              {status}
-            </span>
+            <span className="text-xs px-3 py-1 bg-blue-100 rounded-full">{status}</span>
           </div>
 
-          <p className="text-sm text-slate-600 mb-3">
-            {quiz.description}
-          </p>
+          <p className="text-sm text-slate-600 mb-3">{quiz.description}</p>
 
           {status === "LIVE" && (
             <>
               {!started ? (
                 <div className="text-sm text-red-600 font-semibold flex gap-2 items-center">
                   <Play className="animate-pulse" />
-                  Starts in {formatTimeInMinutes(timeLeft)}
+                  Starts in {formatTime(timeLeft)}
                 </div>
               ) : (
                 <div className="text-sm text-green-600 font-semibold flex gap-2 items-center">
@@ -173,7 +152,9 @@ const Dashboard = () => {
           {status === "UPCOMING" && (
             <div className="text-sm text-slate-500 flex gap-2 items-center">
               <Calendar />
-              {quiz.round1StartTime || quiz.startTime}
+              {new Date(startTime).toLocaleString("en-IN", {
+                timeZone: "Asia/Kolkata",
+              })}
             </div>
           )}
         </div>
@@ -183,9 +164,7 @@ const Dashboard = () => {
             disabled={!started || joiningQuizId === quiz.id}
             onClick={() => handleJoinQuiz(quiz.id)}
             className={`mt-4 py-2 rounded-xl text-white font-semibold ${
-              !started
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-red-500 hover:bg-red-600"
+              !started ? "bg-gray-400" : "bg-red-500 hover:bg-red-600"
             }`}
           >
             {!started
@@ -206,7 +185,6 @@ const Dashboard = () => {
     );
   };
 
-  // ================= LOADING =================
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -215,7 +193,6 @@ const Dashboard = () => {
     );
   }
 
-  // ================= UI =================
   return (
     <>
       <Navbar />
@@ -226,7 +203,6 @@ const Dashboard = () => {
           Welcome 👋 {localStorage.getItem("name")}
         </h1>
 
-        {/* LIVE */}
         <section className="mb-8">
           <h2 className="text-xl font-bold mb-4">Live Quizzes</h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -236,7 +212,6 @@ const Dashboard = () => {
           </div>
         </section>
 
-        {/* UPCOMING */}
         <section className="mb-8">
           <h2 className="text-xl font-bold mb-4">Upcoming Quizzes</h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -246,7 +221,6 @@ const Dashboard = () => {
           </div>
         </section>
 
-        {/* COMPLETED */}
         <section>
           <h2 className="text-xl font-bold mb-4">Completed Quizzes</h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -256,27 +230,26 @@ const Dashboard = () => {
           </div>
         </section>
 
-        {/* POPUP */}
         {showPopup && (
-          <div className="fixed inset-0 bg-slate-900/50 flex justify-center items-center z-50">
-            <div className="bg-white rounded-3xl p-8 text-center">
-              <h2 className="text-xl font-bold mb-4">
-                Round will start in
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="bg-white w-[90%] max-w-sm rounded-2xl p-6 shadow-2xl">
+              <h2 className="text-center text-lg font-semibold text-gray-800">
+                Round Starting Soon
               </h2>
 
-              <div className="text-4xl font-mono mb-6">
-                {formatTimeMMSS(popupTimeLeft)}
+              <div className="mt-4 text-center text-5xl font-mono font-bold text-blue-600 tracking-wider">
+                {formatTime(popupTimeLeft)}
               </div>
-              
-              <div className="text-sm text-slate-600 mb-6">
-                ({formatTimeInMinutes(popupTimeLeft)})
-              </div>
+
+              <p className="mt-3 text-center text-sm text-gray-500">
+                Please wait while we prepare your quiz
+              </p>
 
               <button
                 onClick={() => handleJoinQuiz(popupQuizId)}
-                className="px-6 py-3 bg-blue-600 text-white rounded-xl"
+                className="mt-6 w-full py-3 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 transition"
               >
-                Refresh Status
+                Check Status
               </button>
             </div>
           </div>

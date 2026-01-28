@@ -47,7 +47,7 @@ export const createQuiz = async (req: any, res: Response<QuizResponse>) => {
 
     
     const round1StartTime = new Date(
-      quizStartTime.getTime() + 5 * 60 * 1000
+      quizStartTime.getTime() + 2 * 60 * 1000
     );
 
     const quiz = await prisma.quiz.create({
@@ -72,13 +72,13 @@ export const createQuiz = async (req: any, res: Response<QuizResponse>) => {
               roundNumber: 2,
               timeLimit: timeLimit2,
               maxParticipants: round2Players,
-              roundStartTime: null, // starts automatically after round 1
+              roundStartTime: null, 
             },
             {
               roundNumber: 3,
               timeLimit: timeLimit3,
               maxParticipants: round3Players,
-              roundStartTime: null, // starts automatically after round 2
+              roundStartTime: null, 
             },
           ],
         },
@@ -98,7 +98,6 @@ export const createQuiz = async (req: any, res: Response<QuizResponse>) => {
   }
 };
 
-/* ---------------- GET ALL QUIZ ---------------- */
 export const getAllQuiz = async (req: Request | any, res: Response) => {
   try {
     const quizzes = await prisma.quiz.findMany({
@@ -139,7 +138,6 @@ export const getAllQuiz = async (req: Request | any, res: Response) => {
   }
 };
 
-/* ---------------- UPDATE QUIZ ---------------- */
 export const updateQuiz = async (req: any, res: any) => {
   try {
     const { id } = req.params;
@@ -197,7 +195,6 @@ export const updateQuiz = async (req: any, res: any) => {
   }
 };
 
-/* ---------------- DELETE QUIZ ---------------- */
 export const deleteQuiz = async (
   req: Request<{ id: string }>,
   res: Response<QuizResponse>
@@ -217,7 +214,6 @@ export const deleteQuiz = async (
 };
 
 
-// GET /user/quiz/:quizId/status
 export const getQuizStatus = async (req: Request | any, res: Response) => {
   const { quizId } = req.params;
 
@@ -260,7 +256,6 @@ export const getQuizStatus = async (req: Request | any, res: Response) => {
       });
     }
 
-    // Round 1 started
     return res.json({
       canJoin: true,
       message: "You can join the quiz now",
