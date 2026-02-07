@@ -1,0 +1,24 @@
+body {
+  font-family: "Geist", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
+}
+/* ERROR */
+.Toastify__toast--error {
+  border-left: 4px solid #ef4444; /* red-500 */
+}
+
+/* SUCCESS */
+.Toastify__toast--success {
+  border-left: 4px solid #22c55e; /* green-500 */
+}
+
+/* INFO / WARNING */
+.Toastify__toast--info {
+  border-left: 4px solid #3b82f6;
+}
+
+.Toastify__toast--warning {
+  border-left: 4px solid #f59e0b;
+}

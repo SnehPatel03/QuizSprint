@@ -1,0 +1,14 @@
+import express from 'express'
+import { signup ,login, logout, otpVerify, forgotPassword, resetPassword } from '../Controllers/authControllers'
+import { authorize } from '../Middleware/authorize'
+
+const route = express.Router()
+
+route.post("/signup",signup)
+route.post("/login",login)
+route.get("/logout",authorize,logout)
+route.post('/otpverify',otpVerify)
+route.post('/forgotPassword', forgotPassword)
+route.post('/reset-password/:token', resetPassword)
+
+export default route

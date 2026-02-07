@@ -1,0 +1,25 @@
+@import "tailwindcss";
+body {
+  font-family: "Geist", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
+  background-color  : #000;
+
+}
+
+.Toastify__toast--error {
+  border-left: 4px solid #ef4444; 
+}
+
+.Toastify__toast--success {
+  border-left: 4px solid #22c55e; 
+}
+
+.Toastify__toast--info {
+  border-left: 4px solid #3b82f6;
+}
+
+.Toastify__toast--warning {
+  border-left: 4px solid #f59e0b;
+}

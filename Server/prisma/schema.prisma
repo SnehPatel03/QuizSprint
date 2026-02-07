@@ -1,0 +1,158 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  role      Role     @default(USER)
+  createdAt DateTime @default(now())
+  name      String
+  password  String
+
+  attempts QuizAttempt[]
+  quizzes  Quiz[]
+
+  verificationTokens VerificationToken[] // ✅ CHANGED
+
+  isEmailVerified   Boolean   @default(false)
+  emailVerifiedAt   DateTime?
+  passwordChangedAt DateTime?
+
+    resetPasswordToken     String?
+  resetPasswordExpires  DateTime?
+
+}
+
+enum TokenType {
+  EMAIL_VERIFY
+  PASSWORD_RESET
+}
+
+model VerificationToken {
+  id        String    @id @default(uuid())
+  userId    String
+  token     String // hashed OTP
+  type      TokenType
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, type])
+}
+
+model Quiz {
+  id          String     @id @default(uuid())
+  title       String
+  description String
+  createdAt   DateTime   @default(now())
+  startTime   DateTime
+  status      QuizStatus @default(DRAFT)
+
+  maxParticipants Int
+  round2Players   Int
+  round3Players   Int
+
+  createdBy String
+  admin     User   @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+
+  attempts QuizAttempt[]
+  rounds   Round[]
+}
+
+model Round {
+  id              String         @id @default(uuid())
+  quizId          String
+  roundNumber     Int
+  timeLimit       Int
+  status          RoundStatus    @default(PENDING)
+  maxParticipants Int
+  createdAt       DateTime       @default(now())
+  questions       Question[]
+  quiz            Quiz           @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  roundAttempts   RoundAttempt[]
+  roundStartTime  DateTime?
+
+  @@unique([quizId, roundNumber])
+}
+
+enum RoundStatus {
+  PENDING
+  ACTIVE
+  COMPLETED
+}
+
+model Question {
+  id        String   @id @default(uuid())
+  roundId   String
+  text      String
+  createdAt DateTime @default(now())
+  options   Option[]
+  round     Round    @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  answers   Answer[]
+}
+
+model Option {
+  id         String   @id @default(uuid())
+  questionId String
+  text       String
+  isCorrect  Boolean  @default(false)
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+}
+
+model QuizAttempt {
+  id        String         @id @default(uuid())
+  userId    String
+  quizId    String
+  isWinner  Boolean        @default(false)
+  startedAt DateTime       @default(now())
+  quiz      Quiz           @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rounds    RoundAttempt[]
+
+  @@unique([userId, quizId])
+}
+
+model RoundAttempt {
+  id            String      @id @default(uuid())
+  quizAttemptId String
+  roundId       String
+  isCorrect     Boolean
+  timeTaken     Int
+  qualified     Boolean
+  createdAt     DateTime    @default(now())
+  quizAttempt   QuizAttempt @relation(fields: [quizAttemptId], references: [id], onDelete: Cascade)
+  round         Round       @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  answers       Answer[]
+
+  @@unique([quizAttemptId, roundId])
+}
+
+model Answer {
+  id               String   @id @default(uuid())
+  roundAttemptId   String
+  questionId       String
+  selectedOptionId String
+  isCorrect        Boolean
+  createdAt        DateTime @default(now())
+
+  roundAttempt RoundAttempt @relation(fields: [roundAttemptId], references: [id], onDelete: Cascade)
+  question     Question     @relation(fields: [questionId], references: [id], onDelete: Cascade)
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum QuizStatus {
+  DRAFT
+  LIVE
+  COMPLETED
+}
