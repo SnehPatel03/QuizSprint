@@ -10,31 +10,30 @@ export const sendMail = async ({
   message: string;
 }) => {
   try {
-
     const transporter = nodemailer.createTransport({
       host: "smtp-relay.brevo.com",
       port: 587,
-      secure: false, // TLS
+      secure: false,
       auth: {
-        user: process.env.BREVO_SMTP_USER,
-        pass: process.env.BREVO_SMTP_PASS,
+        user: process.env.BREVO_SMTP_USER!,
+        pass: process.env.BREVO_SMTP_PASS!,
       },
     });
 
     await transporter.verify();
     console.log("✅ Brevo SMTP connected");
 
-    await transporter.sendMail({
-      from: `"QuizSprint" <${process.env.BREVO_SMTP_USER}>`,
+    const info = await transporter.sendMail({
+      from: `"QuizSprint" <test.snehpatel.dev@gmail.com>`, // VERIFIED SENDER
       to: email,
-      subject:"Subject",
+      subject,
       html: message,
     });
 
-    console.log("✅ Email sent to:", email);
+    console.log("✅ Email queued. Message ID:", info.messageId);
     return true;
   } catch (error) {
-    console.error("❌ Brevo email failed:", error);
+    console.error("❌ Email failed:", error);
     return false;
   }
 };
