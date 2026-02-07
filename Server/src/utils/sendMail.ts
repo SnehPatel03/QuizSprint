@@ -1,29 +1,40 @@
 import nodemailer from "nodemailer";
 
-export const sendMail = async ({ email, subject, message }: any) => {
-  
+export const sendMail = async ({
+  email,
+  subject,
+  message,
+}: {
+  email: string;
+  subject: string;
+  message: string;
+}) => {
   try {
     const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 465, // ✅ CHANGE
-      secure: true, // ✅ REQUIRED for 465
+      host: "smtp-relay.brevo.com",
+      port: 587,
+      secure: false, // TLS
       auth: {
-        user: "snehp316@gmail.com",
-        pass: "aufxmugtoadqhasw",
+        user: process.env.BREVO_SMTP_USER!,
+        pass: process.env.BREVO_SMTP_PASS!,
       },
     });
 
+    // Optional but useful for debugging
+    await transporter.verify();
+    console.log("✅ Brevo SMTP connected");
+
     await transporter.sendMail({
-      from: `"QuizSprint" <snehp316@gmail.com>`,
+      from: `"QuizSprint" <no-reply@quizsprint.com>`,
       to: email,
       subject,
       html: message,
     });
 
-    console.log("✅ Email sent");
+    console.log("✅ Email sent to:", email);
     return true;
   } catch (error) {
-    console.error("❌ Email failed:", error);
+    console.error("❌ Brevo email failed:", error);
     return false;
   }
 };
