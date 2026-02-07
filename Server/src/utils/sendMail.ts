@@ -25,9 +25,9 @@ export const sendMail = async ({
     console.log("✅ Brevo SMTP connected");
 
     await transporter.sendMail({
-      from: `"QuizSprint" <test.snehpatel.dev@gmail.com>`,
+      from: `"QuizSprint" <${process.env.BREVO_SMTP_USER}>`,
       to: email,
-      subject,
+      subject:"Subject",
       html: message,
     });
 
