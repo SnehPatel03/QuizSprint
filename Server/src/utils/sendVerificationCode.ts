@@ -4,11 +4,11 @@ import { sendMail } from "./sendMail.js";
 export async function sendVerificationCode(email: any, verificationCode:any) {
   try {
     const message = generateVerificationCodeEmailTemplate(verificationCode);
-    await sendMail({
-      email,
-      subject: "Verification code by Patel.Auth.Co",
-      message,
-    });
+    return await sendMail({
+    email,
+    subject: "Verify your QuizSprint account",
+    message,
+  });
 
     return true;
   } catch (error) {
