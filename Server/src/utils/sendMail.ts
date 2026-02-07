@@ -1,29 +1,29 @@
 import nodemailer from "nodemailer";
 
-export const sendMail = async ({ email, subject, message }:any) => {
+export const sendMail = async ({ email, subject, message }: any) => {
+  
   try {
     const transporter = nodemailer.createTransport({
-      service: "gmail",
+      host: "smtp.gmail.com",
+      port: 465, // ✅ CHANGE
+      secure: true, // ✅ REQUIRED for 465
       auth: {
         user: "snehp316@gmail.com",
-        pass: "aufxmugtoadqhasw", 
-      },
-      tls: {
-        rejectUnauthorized: false,
+        pass: "aufxmugtoadqhasw",
       },
     });
 
-    const mailOptions = {
+    await transporter.sendMail({
       from: `"QuizSprint" <snehp316@gmail.com>`,
       to: email,
       subject,
       html: message,
-    };
+    });
 
-    await transporter.sendMail(mailOptions);
-    console.log("✅ Email sent to:", email);
+    console.log("✅ Email sent");
+    return true;
   } catch (error) {
-    console.error("❌ Email sending failed:", error);
-    throw error;
+    console.error("❌ Email failed:", error);
+    return false;
   }
 };
