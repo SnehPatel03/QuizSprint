@@ -34,7 +34,7 @@ const PopUp = ({ onClose, onSuccess }) => {
 
     try {
       await axios.post(
-        "quiz-sprint-rho.vercel.app/admin/quiz",
+        "quiz-sprint-client.vercel.app/admin/quiz",
         {
           title: formData.title,
           description: formData.description,

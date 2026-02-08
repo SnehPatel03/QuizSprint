@@ -48,7 +48,7 @@ const OtpVerify = () => {
     setLoading(true);
     try {
       const { data } = await axios.post(
-        "quiz-sprint-rho.vercel.app/auth/otpverify",
+        "quiz-sprint-client.vercel.app/auth/otpverify",
         { email, otp: otpValue },
         { withCredentials: true },
       );
