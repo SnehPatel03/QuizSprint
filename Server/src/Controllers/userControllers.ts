@@ -294,7 +294,6 @@ export const submitRound = async (req: any, res: any) => {
   }
 };
 
-// ----------------- GET ROUND RESULT -----------------
 export const getRoundResult = async (req: any, res: any) => {
   try {
     const { roundId } = req.params;

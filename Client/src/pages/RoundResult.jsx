@@ -38,7 +38,7 @@ const RoundResult = () => {
     try {
       const res = await axios.get(
         `https://quiz-sprint-server.vercel.app/user/roundresult/${roundId}`,
-        { withCredentials: true }
+        { withCredentials: true },
       );
 
       setRoundOngoing(res.data.roundOngoing);
@@ -121,16 +121,25 @@ const RoundResult = () => {
       }, 1000);
       return () => clearTimeout(timer);
     }
-  }, [canStartNextRound, isFinalRound, myStatus, quizId, roundNumber, navigate]);
+  }, [
+    canStartNextRound,
+    isFinalRound,
+    myStatus,
+    quizId,
+    roundNumber,
+    navigate,
+  ]);
 
   useEffect(() => {
     if (!isFinalRound || !leaderboard.length || !myStatus) return;
     if (leaderboard[0].userId === myStatus.userId) {
-      axios.post(
-        `https://quiz-sprint-server.vercel.app/user/markWinner/${quizId}`,
-        {},
-        { withCredentials: true }
-      ).catch(() => {});
+      axios
+        .post(
+          `https://quiz-sprint-server.vercel.app/user/markWinner/${quizId}`,
+          {},
+          { withCredentials: true },
+        )
+        .catch(() => {});
     }
   }, [leaderboard, myStatus, isFinalRound, quizId]);
 
@@ -163,8 +172,7 @@ const RoundResult = () => {
     );
   }
 
-  const isWinner =
-    isFinalRound && leaderboard[0]?.userId === myStatus?.userId;
+  const isWinner = isFinalRound && leaderboard[0]?.userId === myStatus?.userId;
 
   const showDashboardButton =
     (!myStatus?.qualified && !isFinalRound) || isWinner;
@@ -187,16 +195,20 @@ const RoundResult = () => {
             className={`mb-8 p-6 rounded-2xl font-semibold text-xl border ${
               isWinner
                 ? "bg-yellow-500/10 border-yellow-500 text-yellow-300"
-                : myStatus.qualified
-                ? "bg-emerald-500/10 border-emerald-500 text-emerald-300"
-                : "bg-red-500/10 border-red-500 text-red-300"
+                : isFinalRound
+                  ? "bg-red-500/10 border-red-500 text-red-300"
+                  : myStatus.qualified
+                    ? "bg-emerald-500/10 border-emerald-500 text-emerald-300"
+                    : "bg-red-500/10 border-red-500 text-red-300"
             }`}
           >
             {isWinner
               ? "🏆 You are the WINNER!"
-              : myStatus.qualified
-              ? "🎉 Qualified for next round"
-              : "👏 Nice try! You are eliminated"}
+              : isFinalRound
+                ? "👏 Nice try! You are eliminated"
+                : myStatus.qualified
+                  ? "🎉 Qualified for next round"
+                  : "👏 Nice try! You are eliminated"}
           </div>
         )}
 
@@ -212,20 +224,11 @@ const RoundResult = () => {
             </thead>
             <tbody>
               {leaderboard.map((user, idx) => (
-                <tr
-                  key={user.userId}
-                  className="border-t border-slate-800"
-                >
-                  <td className="p-4 font-bold text-white">
-                    {idx + 1}
-                  </td>
+                <tr key={user.userId} className="border-t border-slate-800">
+                  <td className="p-4 font-bold text-white">{idx + 1}</td>
                   <td className="p-4 text-left">{user.name}</td>
-                  <td className="p-4 font-semibold">
-                    {user.correctScore}
-                  </td>
-                  <td className="p-4">
-                    {formatTime(user.timeTaken)}
-                  </td>
+                  <td className="p-4 font-semibold">{user.correctScore}</td>
+                  <td className="p-4">{formatTime(user.timeTaken)}</td>
                 </tr>
               ))}
             </tbody>
