@@ -12,7 +12,7 @@ const QuizInfoPopup = ({ quiz, onClose }) => {
 
   const fetchRound = async (round) => {
     const res = await axios.get(
-      `http://localhost:3000/admin/question/fetchQue/${quiz.id}/${round}`,
+      `quiz-sprint-server-7efuxd68u-snehs-projects-93e0437b.vercel.app/admin/question/fetchQue/${quiz.id}/${round}`,
       { withCredentials: true }
     );
     return res.data.questions || [];
@@ -43,7 +43,7 @@ const QuizInfoPopup = ({ quiz, onClose }) => {
     if (!window.confirm("Delete this question?")) return;
 
     await axios.delete(
-      `http://localhost:3000/admin/question/deleteQue/${id}`,
+      `quiz-sprint-server-7efuxd68u-snehs-projects-93e0437b.vercel.app/admin/question/deleteQue/${id}`,
       { withCredentials: true }
     );
 
@@ -61,7 +61,7 @@ const QuizInfoPopup = ({ quiz, onClose }) => {
     try {
       setSaving((p) => ({ ...p, [q.id]: true }));
       await axios.put(
-        `http://localhost:3000/admin/question/updateQue/${q.id}`,
+        `quiz-sprint-server-7efuxd68u-snehs-projects-93e0437b.vercel.app/admin/question/updateQue/${q.id}`,
         {
           text: q.text,
           options: q.options,

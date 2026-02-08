@@ -25,7 +25,7 @@ const ResetPassword = () => {
     setLoading(true);
     try {
       const res = await axios.post(
-        `http://localhost:3000/auth/reset-password/${token}`,
+        `quiz-sprint-server-7efuxd68u-snehs-projects-93e0437b.vercel.app/auth/reset-password/${token}`,
         { password: newPassword },
         { withCredentials: true },
       );
