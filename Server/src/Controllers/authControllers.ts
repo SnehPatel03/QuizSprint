@@ -1,6 +1,6 @@
 import { any, z } from "zod";
 import bcrypt from "bcrypt";
-import { prisma } from "../lib/prisma";
+import {prisma} from "../lib/prisma";
 import type { Response, Request } from "express";
 import generateTokenAndSaveInCookies from "../jwt/token";
 import { generateVerificationCode } from "../utils/generateVeriCode";
