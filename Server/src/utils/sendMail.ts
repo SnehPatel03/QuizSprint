@@ -30,7 +30,6 @@ export const sendMail = async ({
     console.log("SMTP accepted:", info.accepted);
     console.log("SMTP rejected:", info.rejected);
 
-    // 🔴 THIS IS THE REAL CHECK
     if (!info.accepted || info.accepted.length === 0) {
       console.error("❌ Email NOT accepted by SMTP");
       return false;

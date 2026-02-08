@@ -1,12 +1,15 @@
-import { prisma } from "../lib/prisma";
-export const updateQuizStatusMiddleware = async (req, res, next) => {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.updateQuizStatusMiddleware = void 0;
+const prisma_1 = require("../lib/prisma");
+const updateQuizStatusMiddleware = async (req, res, next) => {
     const now = new Date();
     try {
-        const quizzes = await prisma.quiz.findMany({});
+        const quizzes = await prisma_1.prisma.quiz.findMany({});
         for (const quiz of quizzes) {
             // If DRAFT and startTime passed → LIVE
             if (quiz.status === "DRAFT" && now >= quiz.startTime) {
-                await prisma.quiz.update({
+                await prisma_1.prisma.quiz.update({
                     where: { id: quiz.id },
                     data: { status: "LIVE" },
                 });
@@ -25,3 +28,4 @@ export const updateQuizStatusMiddleware = async (req, res, next) => {
     }
     next();
 };
+exports.updateQuizStatusMiddleware = updateQuizStatusMiddleware;

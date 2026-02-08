@@ -1,0 +1,18 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const questionControllers_1 = require("../Controllers/questionControllers");
+const isAdmin_1 = require("../Middleware/isAdmin");
+const authorize_1 = require("../Middleware/authorize");
+const quizStatusUpdate_1 = require("../Middleware/quizStatusUpdate");
+const router = (0, express_1.Router)();
+router.use(authorize_1.authorize);
+router.use(quizStatusUpdate_1.updateQuizStatusMiddleware);
+router.use(isAdmin_1.isAdmin);
+router.post("/createQuefor1/:quizId", questionControllers_1.createQuestionfor1);
+router.post("/createQuefor2/:quizId", questionControllers_1.createQuestionfor2);
+router.post("/createQuefor3/:quizId", questionControllers_1.createQuestionfor3);
+router.put("/updateQue/:id", questionControllers_1.updateQuestion);
+router.delete("/deleteQue/:id", questionControllers_1.deleteQuestion);
+router.get("/fetchQue/:quizId/:roundNumber", questionControllers_1.getQuestionsByRound);
+exports.default = router;

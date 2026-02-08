@@ -1,4 +1,8 @@
-export function generateResetPasswordEmailTemplate(resetPasswordUrl) {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.generateResetPasswordEmailTemplate = generateResetPasswordEmailTemplate;
+exports.generateVerificationCodeEmailTemplate = generateVerificationCodeEmailTemplate;
+function generateResetPasswordEmailTemplate(resetPasswordUrl) {
     return `
 <!DOCTYPE html>
 <html lang="en">
@@ -112,7 +116,7 @@ export function generateResetPasswordEmailTemplate(resetPasswordUrl) {
 </html>
 `;
 }
-export function generateVerificationCodeEmailTemplate(verificationCode) {
+function generateVerificationCodeEmailTemplate(verificationCode) {
     return `
 <!DOCTYPE html>
 <html lang="en">

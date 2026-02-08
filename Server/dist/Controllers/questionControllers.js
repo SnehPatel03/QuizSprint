@@ -1,19 +1,22 @@
-import { prisma } from "../lib/prisma";
-import { z } from "zod";
-const optionSchema = z.object({
-    text: z.string().min(1, "Option text is required"),
-    isCorrect: z.boolean(),
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.deleteQuestion = exports.updateQuestion = exports.getQuestionsByRound = exports.createQuestionfor3 = exports.createQuestionfor2 = exports.createQuestionfor1 = void 0;
+const prisma_1 = require("../lib/prisma");
+const zod_1 = require("zod");
+const optionSchema = zod_1.z.object({
+    text: zod_1.z.string().min(1, "Option text is required"),
+    isCorrect: zod_1.z.boolean(),
 });
-const questionSchema = z.object({
-    text: z.string().min(1, "Question must be at least 1 characters"),
-    options: z.array(optionSchema).min(2, "Minimum 2 options required"),
+const questionSchema = zod_1.z.object({
+    text: zod_1.z.string().min(1, "Question must be at least 1 characters"),
+    options: zod_1.z.array(optionSchema).min(2, "Minimum 2 options required"),
 });
-const bulkSchema = z.object({
-    rounds: z.array(z.object({
-        questions: z.array(questionSchema).min(1),
+const bulkSchema = zod_1.z.object({
+    rounds: zod_1.z.array(zod_1.z.object({
+        questions: zod_1.z.array(questionSchema).min(1),
     })).min(1),
 });
-export const createQuestionfor1 = async (req, res) => {
+const createQuestionfor1 = async (req, res) => {
     try {
         const { quizId } = req.params;
         if (!quizId) {
@@ -28,7 +31,7 @@ export const createQuestionfor1 = async (req, res) => {
         }
         const ROUND_NUMBER = 1;
         // ✅ Find round 1
-        const round = await prisma.round.findFirst({
+        const round = await prisma_1.prisma.round.findFirst({
             where: {
                 quizId,
                 roundNumber: ROUND_NUMBER,
@@ -49,7 +52,7 @@ export const createQuestionfor1 = async (req, res) => {
                     message: `Question "${q.text}" must have at least one correct option`,
                 });
             }
-            const question = await prisma.question.create({
+            const question = await prisma_1.prisma.question.create({
                 data: {
                     text: q.text,
                     roundId: round.id,
@@ -73,7 +76,8 @@ export const createQuestionfor1 = async (req, res) => {
         });
     }
 };
-export const createQuestionfor2 = async (req, res) => {
+exports.createQuestionfor1 = createQuestionfor1;
+const createQuestionfor2 = async (req, res) => {
     try {
         const { quizId } = req.params;
         if (!quizId) {
@@ -87,7 +91,7 @@ export const createQuestionfor2 = async (req, res) => {
             });
         }
         const ROUND_NUMBER = 2;
-        const round = await prisma.round.findFirst({
+        const round = await prisma_1.prisma.round.findFirst({
             where: {
                 quizId,
                 roundNumber: ROUND_NUMBER,
@@ -108,7 +112,7 @@ export const createQuestionfor2 = async (req, res) => {
                     message: `Question "${q.text}" must have at least one correct option`,
                 });
             }
-            const question = await prisma.question.create({
+            const question = await prisma_1.prisma.question.create({
                 data: {
                     text: q.text,
                     roundId: round.id,
@@ -132,7 +136,8 @@ export const createQuestionfor2 = async (req, res) => {
         });
     }
 };
-export const createQuestionfor3 = async (req, res) => {
+exports.createQuestionfor2 = createQuestionfor2;
+const createQuestionfor3 = async (req, res) => {
     try {
         const { quizId } = req.params;
         if (!quizId) {
@@ -146,7 +151,7 @@ export const createQuestionfor3 = async (req, res) => {
             });
         }
         const ROUND_NUMBER = 3;
-        const round = await prisma.round.findFirst({
+        const round = await prisma_1.prisma.round.findFirst({
             where: {
                 quizId,
                 roundNumber: ROUND_NUMBER,
@@ -167,7 +172,7 @@ export const createQuestionfor3 = async (req, res) => {
                     message: `Question "${q.text}" must have at least one correct option`,
                 });
             }
-            const question = await prisma.question.create({
+            const question = await prisma_1.prisma.question.create({
                 data: {
                     text: q.text,
                     roundId: round.id,
@@ -191,10 +196,11 @@ export const createQuestionfor3 = async (req, res) => {
         });
     }
 };
-export const getQuestionsByRound = async (req, res) => {
+exports.createQuestionfor3 = createQuestionfor3;
+const getQuestionsByRound = async (req, res) => {
     try {
         const { quizId, roundNumber } = req.params;
-        const round = await prisma.round.findFirst({
+        const round = await prisma_1.prisma.round.findFirst({
             where: {
                 quizId,
                 roundNumber: Number(roundNumber),
@@ -205,7 +211,7 @@ export const getQuestionsByRound = async (req, res) => {
                 message: "Round not found for this quiz",
             });
         }
-        const questions = await prisma.question.findMany({
+        const questions = await prisma_1.prisma.question.findMany({
             where: { roundId: round.id },
             include: { options: true },
         });
@@ -221,7 +227,8 @@ export const getQuestionsByRound = async (req, res) => {
         });
     }
 };
-export const updateQuestion = async (req, res) => {
+exports.getQuestionsByRound = getQuestionsByRound;
+const updateQuestion = async (req, res) => {
     try {
         const { id } = req.params;
         const { text, options } = req.body;
@@ -233,7 +240,7 @@ export const updateQuestion = async (req, res) => {
                 });
             }
         }
-        const question = await prisma.question.update({
+        const question = await prisma_1.prisma.question.update({
             where: { id },
             data: {
                 text,
@@ -258,10 +265,11 @@ export const updateQuestion = async (req, res) => {
         });
     }
 };
-export const deleteQuestion = async (req, res) => {
+exports.updateQuestion = updateQuestion;
+const deleteQuestion = async (req, res) => {
     try {
         const { id } = req.params;
-        await prisma.question.delete({
+        await prisma_1.prisma.question.delete({
             where: { id },
         });
         return res.status(200).json({
@@ -275,3 +283,4 @@ export const deleteQuestion = async (req, res) => {
         });
     }
 };
+exports.deleteQuestion = deleteQuestion;

@@ -48,7 +48,7 @@ const OtpVerify = () => {
     setLoading(true);
     try {
       const { data } = await axios.post(
-        "https://quizsprint-fox0.onrender.com/auth/otpverify",
+        "http://localhost:3000/auth/otpverify",
         { email, otp: otpValue },
         { withCredentials: true },
       );

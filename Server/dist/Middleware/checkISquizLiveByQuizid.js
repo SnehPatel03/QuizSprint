@@ -1,12 +1,15 @@
-import { prisma } from "../lib/prisma";
-export const checkQuizLiveByqid = async (req, res, next) => {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.checkQuizLiveByQuizid = void 0;
+const prisma_1 = require("../lib/prisma");
+const checkQuizLiveByQuizid = async (req, res, next) => {
     try {
-        const { id } = req.params;
-        if (!id) {
+        const { quizId } = req.params;
+        if (!quizId) {
             return res.status(400).json({ message: "Quiz ID is required" });
         }
-        const quiz = await prisma.quiz.findUnique({
-            where: { id: id },
+        const quiz = await prisma_1.prisma.quiz.findUnique({
+            where: { id: quizId },
             select: { status: true },
         });
         if (!quiz) {
@@ -24,3 +27,4 @@ export const checkQuizLiveByqid = async (req, res, next) => {
         return res.status(500).json({ message: "Internal server error" });
     }
 };
+exports.checkQuizLiveByQuizid = checkQuizLiveByQuizid;

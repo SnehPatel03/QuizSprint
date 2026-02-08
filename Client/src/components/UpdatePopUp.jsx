@@ -60,7 +60,7 @@ const UpdatePopUp = ({ onClose, onSuccess, quiz }) => {
     setLoading(true);
     try {
       await axios.patch(
-        `https://quizsprint-fox0.onrender.com/admin/updateQuiz/${quiz.id}`,
+        `http://localhost:3000/admin/updateQuiz/${quiz.id}`,
         {
           title: formData.title,
           description: formData.description,

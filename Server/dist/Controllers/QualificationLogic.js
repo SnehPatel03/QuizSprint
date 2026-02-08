@@ -1,6 +1,9 @@
-import { prisma } from "../lib/prisma";
-export const calculateRoundQualification = async (roundId) => {
-    const round = await prisma.round.findUnique({
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.calculateRoundQualification = void 0;
+const prisma_1 = require("../lib/prisma");
+const calculateRoundQualification = async (roundId) => {
+    const round = await prisma_1.prisma.round.findUnique({
         where: { id: roundId },
         include: {
             quiz: true,
@@ -33,15 +36,16 @@ export const calculateRoundQualification = async (roundId) => {
     }
     for (let i = 0; i < scoredList.length; i++) {
         const qualified = i < topCount;
-        await prisma.roundAttempt.update({
+        await prisma_1.prisma.roundAttempt.update({
             where: { id: scoredList[i].roundAttemptId },
             data: { qualified },
         });
     }
     // Mark round as COMPLETED after qualification is calculated
-    await prisma.round.update({
+    await prisma_1.prisma.round.update({
         where: { id: roundId },
         data: { status: "COMPLETED" },
     });
     console.log(`Round ${roundId} qualification calculated successfully.`);
 };
+exports.calculateRoundQualification = calculateRoundQualification;

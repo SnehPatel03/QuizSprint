@@ -11,7 +11,7 @@ const Forgot = () => {
     if (!email) return;
     try {
       const response = await axios.post(
-        "https://quizsprint-fox0.onrender.com/auth/forgotPassword",
+        "http://localhost:3000/auth/forgotPassword",
         { email },
         { withCredentials: true },
       );

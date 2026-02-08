@@ -25,7 +25,7 @@ const ResetPassword = () => {
     setLoading(true);
     try {
       const res = await axios.post(
-        `https://quizsprint-fox0.onrender.com/auth/reset-password/${token}`,
+        `http://localhost:3000/auth/reset-password/${token}`,
         { password: newPassword },
         { withCredentials: true },
       );

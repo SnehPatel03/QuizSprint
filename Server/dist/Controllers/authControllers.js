@@ -1,22 +1,28 @@
-import { z } from "zod";
-import bcrypt from "bcrypt";
-import { prisma } from "../lib/prisma";
-import generateTokenAndSaveInCookies from "../jwt/token";
-import { generateVerificationCode } from "../utils/generateVeriCode";
-import { sendVerificationCode } from "../utils/sendVerificationCode";
-import { generateResetPasswordEmailTemplate } from "../utils/template";
-import { sendMail } from "../utils/sendMail";
-import crypto from "crypto";
-const userSchema = z.object({
-    name: z
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.resetPassword = exports.forgotPassword = exports.logout = exports.login = exports.otpVerify = exports.signup = void 0;
+const zod_1 = require("zod");
+const bcrypt_1 = __importDefault(require("bcrypt"));
+const prisma_1 = require("../lib/prisma");
+const token_1 = __importDefault(require("../jwt/token"));
+const generateVeriCode_1 = require("../utils/generateVeriCode");
+const sendVerificationCode_1 = require("../utils/sendVerificationCode");
+const template_1 = require("../utils/template");
+const sendMail_1 = require("../utils/sendMail");
+const crypto_1 = __importDefault(require("crypto"));
+const userSchema = zod_1.z.object({
+    name: zod_1.z
         .string()
         .min(3, { message: "fullname must contain 3 to 20 characters" })
         .max(20, { message: "fullname must contain 3 to 20 characters" }),
-    password: z
+    password: zod_1.z
         .string()
         .min(8, { message: "Password must contain atleast 8 character" }),
 });
-export const signup = async (req, res) => {
+const signup = async (req, res) => {
     try {
         const { email, name, role, password } = req.body || {};
         if (!email || !name || !password) {
@@ -31,13 +37,13 @@ export const signup = async (req, res) => {
                 .status(400)
                 .json({ error: validate.error.issues.map((e) => e.message) });
         }
-        let user = await prisma.user.findUnique({
+        let user = await prisma_1.prisma.user.findUnique({
             where: { email },
         });
         if (user && user.isEmailVerified) {
             return res.status(409).json({ message: "User already registered" });
         }
-        const attempts = await prisma.verificationToken.count({
+        const attempts = await prisma_1.prisma.verificationToken.count({
             where: {
                 user: { email },
                 type: "EMAIL_VERIFY",
@@ -52,8 +58,8 @@ export const signup = async (req, res) => {
             });
         }
         if (!user) {
-            const hashedPassword = await bcrypt.hash(password, 10);
-            user = await prisma.user.create({
+            const hashedPassword = await bcrypt_1.default.hash(password, 10);
+            user = await prisma_1.prisma.user.create({
                 data: {
                     email,
                     name,
@@ -62,15 +68,15 @@ export const signup = async (req, res) => {
                 },
             });
         }
-        const { code, expiresAt } = generateVerificationCode();
-        const hashedOtp = await bcrypt.hash(code, 10);
-        await prisma.verificationToken.deleteMany({
+        const { code, expiresAt } = (0, generateVeriCode_1.generateVerificationCode)();
+        const hashedOtp = await bcrypt_1.default.hash(code, 10);
+        await prisma_1.prisma.verificationToken.deleteMany({
             where: {
                 userId: user.id,
                 type: "EMAIL_VERIFY",
             },
         });
-        await prisma.verificationToken.create({
+        await prisma_1.prisma.verificationToken.create({
             data: {
                 userId: user.id,
                 token: hashedOtp,
@@ -78,10 +84,10 @@ export const signup = async (req, res) => {
                 expiresAt,
             },
         });
-        const codeSent = await sendVerificationCode(email, code);
+        const codeSent = await (0, sendVerificationCode_1.sendVerificationCode)(email, code);
         if (!codeSent) {
             return res
-                .status(500)
+                .status(555)
                 .json({ message: "Failed to send verification code" });
         }
         return res.status(201).json({
@@ -95,7 +101,8 @@ export const signup = async (req, res) => {
         return res.status(500).json({ message: "Error in signup" });
     }
 };
-export const otpVerify = async (req, res) => {
+exports.signup = signup;
+const otpVerify = async (req, res) => {
     try {
         const { email, otp } = req.body;
         if (!email || !otp) {
@@ -103,7 +110,7 @@ export const otpVerify = async (req, res) => {
                 message: "Email and OTP are required",
             });
         }
-        const user = await prisma.user.findUnique({
+        const user = await prisma_1.prisma.user.findUnique({
             where: { email },
         });
         if (!user) {
@@ -114,7 +121,7 @@ export const otpVerify = async (req, res) => {
         if (user.isEmailVerified) {
             return res.status(400).json({ message: "Email already verified" });
         }
-        const verificationToken = await prisma.verificationToken.findFirst({
+        const verificationToken = await prisma_1.prisma.verificationToken.findFirst({
             where: {
                 userId: user.id,
                 type: "EMAIL_VERIFY",
@@ -133,25 +140,25 @@ export const otpVerify = async (req, res) => {
                 message: "Your verification code has expired",
             });
         }
-        const isOtpValid = await bcrypt.compare(String(otp), verificationToken.token);
+        const isOtpValid = await bcrypt_1.default.compare(String(otp), verificationToken.token);
         if (!isOtpValid) {
             return res.status(400).json({
                 message: "Invalid OTP",
             });
         }
-        await prisma.user.update({
+        await prisma_1.prisma.user.update({
             where: { id: user.id },
             data: {
                 isEmailVerified: true,
             },
         });
-        await prisma.verificationToken.deleteMany({
+        await prisma_1.prisma.verificationToken.deleteMany({
             where: {
                 userId: user.id,
                 type: "EMAIL_VERIFY",
             },
         });
-        const token = generateTokenAndSaveInCookies(user, res);
+        const token = (0, token_1.default)(user, res);
         return res.status(200).json({
             message: "OTP verification successful",
             role: user.role,
@@ -164,19 +171,20 @@ export const otpVerify = async (req, res) => {
         return res.status(500).json({ message: "Server Error" });
     }
 };
-export const login = async (req, res) => {
+exports.otpVerify = otpVerify;
+const login = async (req, res) => {
     const { email, password } = req.body;
-    const user = await prisma.user.findUnique({
+    const user = await prisma_1.prisma.user.findUnique({
         where: { email },
     });
     if (!user) {
         return res.status(404).json({ message: "User not registered" });
     }
-    const isMatch = await bcrypt.compare(password, user.password);
+    const isMatch = await bcrypt_1.default.compare(password, user.password);
     if (!isMatch) {
         return res.status(401).json({ message: "Invalid Password" });
     }
-    const token = generateTokenAndSaveInCookies(user, res);
+    const token = (0, token_1.default)(user, res);
     res.json({
         message: "Login successful",
         role: user.role,
@@ -185,12 +193,14 @@ export const login = async (req, res) => {
         token,
     });
 };
-export const logout = async (req, res) => {
+exports.login = login;
+const logout = async (req, res) => {
     return res.status(200).json({
         message: "Logged out successfully",
     });
 };
-export const forgotPassword = async (req, res) => {
+exports.logout = logout;
+const forgotPassword = async (req, res) => {
     try {
         const { email } = req.body;
         if (!email) {
@@ -198,7 +208,7 @@ export const forgotPassword = async (req, res) => {
                 message: "Email is required",
             });
         }
-        const user = await prisma.user.findFirst({
+        const user = await prisma_1.prisma.user.findFirst({
             where: {
                 email,
                 isEmailVerified: true,
@@ -209,21 +219,21 @@ export const forgotPassword = async (req, res) => {
                 message: "Verified user not found with this email",
             });
         }
-        const resetToken = crypto.randomBytes(32).toString("hex");
-        const hashedToken = crypto
+        const resetToken = crypto_1.default.randomBytes(32).toString("hex");
+        const hashedToken = crypto_1.default
             .createHash("sha256")
             .update(resetToken)
             .digest("hex");
-        await prisma.user.update({
+        await prisma_1.prisma.user.update({
             where: { id: user.id },
             data: {
                 resetPasswordToken: hashedToken,
                 resetPasswordExpires: new Date(Date.now() + 15 * 60 * 1000),
             },
         });
-        const resetPasswordUrl = `http://localhost:5173/reset-password/${resetToken}`;
-        const message = generateResetPasswordEmailTemplate(resetPasswordUrl);
-        await sendMail({
+        const resetPasswordUrl = `https://quizsprint-client-side.onrender.com/reset-password/${resetToken}`;
+        const message = (0, template_1.generateResetPasswordEmailTemplate)(resetPasswordUrl);
+        await (0, sendMail_1.sendMail)({
             email: user.email,
             subject: "QuizSprint Password Reset",
             message,
@@ -240,7 +250,8 @@ export const forgotPassword = async (req, res) => {
         });
     }
 };
-export const resetPassword = async (req, res) => {
+exports.forgotPassword = forgotPassword;
+const resetPassword = async (req, res) => {
     try {
         const { token } = req.params;
         const { password } = req.body;
@@ -249,11 +260,11 @@ export const resetPassword = async (req, res) => {
                 message: "Token and new password are required",
             });
         }
-        const hashedToken = crypto
+        const hashedToken = crypto_1.default
             .createHash("sha256")
             .update(token)
             .digest("hex");
-        const user = await prisma.user.findFirst({
+        const user = await prisma_1.prisma.user.findFirst({
             where: {
                 resetPasswordToken: hashedToken,
                 resetPasswordExpires: { gt: new Date() },
@@ -264,8 +275,8 @@ export const resetPassword = async (req, res) => {
                 message: "Reset token is invalid or expired",
             });
         }
-        const hashedPassword = await bcrypt.hash(password, 10);
-        await prisma.user.update({
+        const hashedPassword = await bcrypt_1.default.hash(password, 10);
+        await prisma_1.prisma.user.update({
             where: { id: user.id },
             data: {
                 password: hashedPassword,
@@ -282,3 +293,4 @@ export const resetPassword = async (req, res) => {
         return res.status(500).json({ message: "Server error" });
     }
 };
+exports.resetPassword = resetPassword;

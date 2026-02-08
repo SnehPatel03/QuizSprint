@@ -1,5 +1,5 @@
 import { generateVerificationCodeEmailTemplate } from "./template";
-import { sendMail } from "./sendMail.js";
+import { sendMail } from "./sendMail";
 
 export async function sendVerificationCode(email: any, verificationCode:any) {
   try {

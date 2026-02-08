@@ -28,7 +28,7 @@ const RoundPage = () => {
         setLoading(true);
 
         const res = await axios.post(
-          `https://quizsprint-fox0.onrender.com/user/startRound/${quizId}/${roundNumber}`,
+          `http://localhost:3000/user/startRound/${quizId}/${roundNumber}`,
           {},
           { withCredentials: true }
         );
@@ -87,7 +87,7 @@ const RoundPage = () => {
         };
 
         await axios.post(
-          `https://quizsprint-fox0.onrender.com/user/submitRound/${roundId}`,
+          `http://localhost:3000/user/submitRound/${roundId}`,
           payload,
           { withCredentials: true }
         );

@@ -1,10 +1,13 @@
-import { prisma } from "../lib/prisma";
-export const checkUserRoundTime = async (req, res, next) => {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.checkUserRoundTime = void 0;
+const prisma_1 = require("../lib/prisma");
+const checkUserRoundTime = async (req, res, next) => {
     try {
         const { roundId, userId } = req.body;
         if (!roundId)
             return res.status(400).json({ message: "Round ID required" });
-        const roundAttempt = await prisma.roundAttempt.findFirst({
+        const roundAttempt = await prisma_1.prisma.roundAttempt.findFirst({
             where: { roundId, quizAttempt: { userId } },
             include: { round: true },
         });
@@ -23,3 +26,4 @@ export const checkUserRoundTime = async (req, res, next) => {
         return res.status(500).json({ message: "Internal server error" });
     }
 };
+exports.checkUserRoundTime = checkUserRoundTime;
