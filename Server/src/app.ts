@@ -18,7 +18,8 @@ app.use(
     origin: (origin, callback) => {
       const allowedOrigins = [
         "http://localhost:5173",
-        "https://quizsprint-client.vercel.app"
+        'https://quiz-sprint-client.vercel.app'
+
       ];
 
       if (!origin || allowedOrigins.includes(origin)) {
