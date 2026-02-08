@@ -23,7 +23,7 @@ const Login = () => {
       setLoading(true);
 
       const response = await axios.post(
-        "http://localhost:3000/auth/login",
+        "quiz-sprint-rho.vercel.app/auth/login",
         { email, password },
         { withCredentials: true },
       );
