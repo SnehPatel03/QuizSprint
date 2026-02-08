@@ -60,7 +60,7 @@ const UpdatePopUp = ({ onClose, onSuccess, quiz }) => {
     setLoading(true);
     try {
       await axios.patch(
-        `quiz-sprint-client.vercel.app/admin/updateQuiz/${quiz.id}`,
+        `https://quiz-sprint-server.vercel.app/admin/updateQuiz/${quiz.id}`,
         {
           title: formData.title,
           description: formData.description,

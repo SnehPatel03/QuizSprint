@@ -11,7 +11,7 @@ const Forgot = () => {
     if (!email) return;
     try {
       const response = await axios.post(
-        "quiz-sprint-client.vercel.app/auth/forgotPassword",
+        "https://quiz-sprint-server.vercel.app/auth/forgotPassword",
         { email },
         { withCredentials: true },
       );

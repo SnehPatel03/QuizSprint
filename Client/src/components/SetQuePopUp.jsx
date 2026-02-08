@@ -72,7 +72,7 @@ const SetQuePopUp = ({ quiz, onClose, onSuccess }) => {
     setLoading(true);
     try {
       await axios.post(
-        `quiz-sprint-client.vercel.app/admin/question/createQuefor${currentRound}/${quiz.id}`,
+        `https://quiz-sprint-server.vercel.app/admin/question/createQuefor${currentRound}/${quiz.id}`,
         buildBackendPayload(),
         { withCredentials: true }
       );

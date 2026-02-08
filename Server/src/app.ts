@@ -13,16 +13,15 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ----- Middleware -----
+
 app.use(cors({
-  origin: 'https://quiz-sprint-client.vercel.app', // frontend URL
+  origin: 'https://quiz-sprint-client.vercel.app', 
   credentials: true,
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// ----- Routes -----
 app.get("/", (req, res) => {
   res.json({ message: "App is Running 🚀" });
 });
@@ -35,3 +34,5 @@ app.use("/user", userRoutes);
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+export default app
