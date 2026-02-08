@@ -37,7 +37,7 @@ const AdminDashboard = () => {
     try {
       setLoading(true);
       const res = await axios.get(
-        "quiz-sprint-server-7efuxd68u-snehs-projects-93e0437b.vercel.app/admin/fetchQuiz",
+        "http://localhost:3000/admin/fetchQuiz",
         { withCredentials: true }
       );
       setQuizzes(res.data.quiz || []);
@@ -88,7 +88,7 @@ const AdminDashboard = () => {
       setDeleting(true);
       try {
         await axios.delete(
-          `quiz-sprint-server-7efuxd68u-snehs-projects-93e0437b.vercel.app/admin/deleteQuiz/${quiz.id}`,
+          `http://localhost:3000/admin/deleteQuiz/${quiz.id}`,
           { withCredentials: true }
         );
         setQuizzes((prev) => prev.filter((q) => q.id !== quiz.id));

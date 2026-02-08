@@ -28,7 +28,7 @@ const RoundPage = () => {
         setLoading(true);
 
         const res = await axios.post(
-          `quiz-sprint-server-7efuxd68u-snehs-projects-93e0437b.vercel.app/user/startRound/${quizId}/${roundNumber}`,
+          `http://localhost:3000/user/startRound/${quizId}/${roundNumber}`,
           {},
           { withCredentials: true }
         );
@@ -87,7 +87,7 @@ const RoundPage = () => {
         };
 
         await axios.post(
-          `quiz-sprint-server-7efuxd68u-snehs-projects-93e0437b.vercel.app/user/submitRound/${roundId}`,
+          `http://localhost:3000/user/submitRound/${roundId}`,
           payload,
           { withCredentials: true }
         );

@@ -36,9 +36,9 @@ const Dashboard = () => {
     setLoading(true);
     try {
       const [live, upcoming, completed] = await Promise.all([
-        axios.get("quiz-sprint-server-7efuxd68u-snehs-projects-93e0437b.vercel.app/user/fetchQuizUserLive", { withCredentials: true }),
-        axios.get("quiz-sprint-server-7efuxd68u-snehs-projects-93e0437b.vercel.app/user/fetchQuizUserUpcoming", { withCredentials: true }),
-        axios.get("quiz-sprint-server-7efuxd68u-snehs-projects-93e0437b.vercel.app/user/fetchQuizUserCompleted", { withCredentials: true }),
+        axios.get("http://localhost:3000/user/fetchQuizUserLive", { withCredentials: true }),
+        axios.get("http://localhost:3000/user/fetchQuizUserUpcoming", { withCredentials: true }),
+        axios.get("http://localhost:3000/user/fetchQuizUserCompleted", { withCredentials: true }),
       ]);
 
       setLiveQuizzes(live.data.quiz || []);
@@ -61,7 +61,7 @@ const Dashboard = () => {
 
     try {
       const res = await axios.post(
-        `quiz-sprint-server-7efuxd68u-snehs-projects-93e0437b.vercel.app/user/joinQuiz/${quizId}`,
+        `http://localhost:3000/user/joinQuiz/${quizId}`,
         {},
         { withCredentials: true }
       );

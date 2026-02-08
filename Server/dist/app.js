@@ -18,7 +18,7 @@ app.use((0, cors_1.default)({
     origin: (origin, callback) => {
         const allowedOrigins = [
             "http://localhost:5173",
-            "https://quizsprint-client-side.onrender.com",
+            "https://quizsprint-client.vercel.app"
         ];
         if (!origin || allowedOrigins.includes(origin)) {
             callback(null, true);
@@ -41,6 +41,4 @@ app.use("/auth", authRoutes_1.default);
 app.use("/admin", adminRoutes_1.default);
 app.use("/admin/question", questionRoutes_1.default);
 app.use("/user", userRoutes_1.default);
-app.listen(PORT, () => {
-    console.log(`🔥 Server running on port ${PORT}`);
-});
+exports.default = app;

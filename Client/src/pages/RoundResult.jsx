@@ -37,7 +37,7 @@ const RoundResult = () => {
   const fetchRoundResult = async () => {
     try {
       const res = await axios.get(
-        `quiz-sprint-server-7efuxd68u-snehs-projects-93e0437b.vercel.app/user/roundresult/${roundId}`,
+        `http://localhost:3000/user/roundresult/${roundId}`,
         { withCredentials: true }
       );
 
@@ -127,7 +127,7 @@ const RoundResult = () => {
     if (!isFinalRound || !leaderboard.length || !myStatus) return;
     if (leaderboard[0].userId === myStatus.userId) {
       axios.post(
-        `quiz-sprint-server-7efuxd68u-snehs-projects-93e0437b.vercel.app/user/markWinner/${quizId}`,
+        `http://localhost:3000/user/markWinner/${quizId}`,
         {},
         { withCredentials: true }
       ).catch(() => {});
