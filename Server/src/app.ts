@@ -2,7 +2,6 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-
 import authRoute from "./Routes/authRoutes";
 import adminRoute from "./Routes/adminRoutes";
 import questionRoute from "./Routes/questionRoutes";
@@ -17,11 +16,10 @@ app.use(
   cors({
     origin: (origin, callback) => {
       const allowedOrigins = [
-        "http://localhost:5173",
+        // "http://localhost:5173",
         'https://quiz-sprint-client.vercel.app'
-
       ];
-
+   
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
