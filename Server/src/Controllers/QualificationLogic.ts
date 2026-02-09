@@ -13,7 +13,6 @@
     if (!round) throw new Error("Round not found");
 
     const totalQuestions = round.questions.length;
-
     const scoredList = round.roundAttempts.map((attempt: any) => {
       const correctAnswers = attempt.answers.filter((a:any) => a.isCorrect).length;
       return {

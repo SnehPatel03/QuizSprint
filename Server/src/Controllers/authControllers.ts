@@ -269,7 +269,7 @@ export const forgotPassword = async (req: Request, res: Response) => {
     });
 
 
-    const resetPasswordUrl = `https://quizsprint-client-side.onrender.com/reset-password/${resetToken}`;
+    const resetPasswordUrl = `https://quiz-sprint-client.vercel.app/reset-password/${resetToken}`;
     const message = generateResetPasswordEmailTemplate(resetPasswordUrl);
 
     await sendMail({
