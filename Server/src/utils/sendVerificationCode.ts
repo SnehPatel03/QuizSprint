@@ -1,7 +1,7 @@
 import { generateVerificationCodeEmailTemplate } from "./template";
 import { sendMail } from "./sendMail";
 
-export async function sendVerificationCode(email: any, verificationCode:any) {
+export async function sendVerificationCode(email: string, verificationCode:number | string) {
   try {
     const message = generateVerificationCodeEmailTemplate(verificationCode);
     return await sendMail({

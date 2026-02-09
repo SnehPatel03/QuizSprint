@@ -1,11 +1,44 @@
 import { Request, Response } from "express";
 import { prisma } from "../lib/prisma";
 import { z } from "zod";
-import { istToUTC,utcToIST, nowUTC } from "../utils/time";
+import { istToUTC, utcToIST, nowUTC } from "../utils/time";
+
+interface QuizType {
+  id: string;
+  title: string;
+  description: string;
+  createdAt: Date;
+  startTime: Date;
+  status: string;
+  maxParticipants: number;
+  round2Players: number;
+  round3Players: number;
+  createdBy: string;
+  admin: User;
+  attempts: QuizAttempt[];
+  rounds: Round[];
+}
+interface User {
+  id: string;
+  name: string;
+}
+
+interface Round {
+  id: string;
+  roundNumber: number;
+  timeLimit: number;
+
+}
+
+interface QuizAttempt {
+  id: string;
+  isWinner: boolean;
+}
+
 
 interface QuizResponse {
   message: string;
-  quiz?: any;
+  quiz?: QuizType;
 }
 
 const roundSchema = z.object({
@@ -20,7 +53,7 @@ const roundSchema = z.object({
   timeLimit3: z.number(),
 });
 
-export const createQuiz = async (req: any, res: Response | any) => {
+export const createQuiz = async (req: Request, res: Response) => {
   try {
     const parsed = roundSchema.safeParse(req.body);
 
@@ -43,12 +76,9 @@ export const createQuiz = async (req: any, res: Response | any) => {
       timeLimit3,
     } = parsed.data;
 
-
     const quizStartTime = istToUTC(startTime);
 
-    const round1StartTime = new Date(
-      quizStartTime.getTime() + 2 * 60 * 1000
-    );
+    const round1StartTime = new Date(quizStartTime.getTime() + 2 * 60 * 1000);
 
     const quiz = await prisma.quiz.create({
       data: {
@@ -98,7 +128,7 @@ export const createQuiz = async (req: any, res: Response | any) => {
   }
 };
 
-export const getAllQuiz = async (req: Request | any, res: Response | any) => {
+export const getAllQuiz = async (req: Request, res: Response) => {
   try {
     const quizzes = await prisma.quiz.findMany({
       where: {
@@ -115,7 +145,7 @@ export const getAllQuiz = async (req: Request | any, res: Response | any) => {
         },
       },
       orderBy: {
-        createdAt: "desc", // ✅ FIXED
+        createdAt: "desc",
       },
     });
 
@@ -138,7 +168,10 @@ export const getAllQuiz = async (req: Request | any, res: Response | any) => {
   }
 };
 
-export const updateQuiz = async (req: any, res: any) => {
+export const updateQuiz = async (
+  req: Request<{ id: string }>,
+  res: Response,
+) => {
   try {
     const { id } = req.params;
 
@@ -197,7 +230,7 @@ export const updateQuiz = async (req: any, res: any) => {
 
 export const deleteQuiz = async (
   req: Request<{ id: string }>,
-  res: Response<QuizResponse> | any
+  res: Response<QuizResponse>,
 ) => {
   try {
     await prisma.quiz.delete({
@@ -213,8 +246,10 @@ export const deleteQuiz = async (
   }
 };
 
-
-export const getQuizStatus = async (req: any, res: any)=> {
+export const getQuizStatus = async (
+  req: Request<{ quizId: string }>,
+  res: Response,
+) => {
   const { quizId } = req.params;
 
   try {
@@ -240,7 +275,7 @@ export const getQuizStatus = async (req: any, res: any)=> {
         canJoin: false,
         message: `Round 1 will start at ${utcToIST(round1.roundStartTime)}`,
         secondsLeft: Math.floor(
-          (round1.roundStartTime.getTime() - now.getTime()) / 1000
+          (round1.roundStartTime.getTime() - now.getTime()) / 1000,
         ),
         quizStatus: quiz.status,
       });

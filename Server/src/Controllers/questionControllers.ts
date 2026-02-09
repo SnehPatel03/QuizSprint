@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { prisma } from "../lib/prisma";
-import { string, z } from "zod";
+import { z } from "zod";
 
 const optionSchema = z.object({
   text: z.string().min(1, "Option text is required"),
@@ -42,7 +42,6 @@ export const createQuestionfor1 = async (
 
     const ROUND_NUMBER = 1;
 
-    // ✅ Find round 1
     const round = await prisma.round.findFirst({
       where: {
         quizId,
@@ -62,7 +61,6 @@ export const createQuestionfor1 = async (
     const createdQuestions = [];
 
     for (const q of questions) {
-      // ✅ Validate correct option
       if (!q.options.some(o => o.isCorrect)) {
         return res.status(400).json({
           message: `Question "${q.text}" must have at least one correct option`,
@@ -137,7 +135,6 @@ export const createQuestionfor2 = async (
     const createdQuestions = [];
 
     for (const q of questions) {
-      // ✅ Validate correct option
       if (!q.options.some(o => o.isCorrect)) {
         return res.status(400).json({
           message: `Question "${q.text}" must have at least one correct option`,
@@ -206,13 +203,11 @@ export const createQuestionfor3 = async (
       });
     }
 
-    // 👉 Take questions from first round only
     const questions = parsed.data.rounds[0].questions;
 
     const createdQuestions = [];
 
     for (const q of questions) {
-      // ✅ Validate correct option
       if (!q.options.some(o => o.isCorrect)) {
         return res.status(400).json({
           message: `Question "${q.text}" must have at least one correct option`,

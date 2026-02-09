@@ -2,6 +2,7 @@ import { prisma } from "../lib/prisma";
 import { calculateRoundQualification } from "./QualificationLogic";
 import { getQuestionsByRound } from "./questionControllers";
 import {nowUTC} from '../utils/time'
+import type { Request, Response } from "express";
 
 const BUFFER_MS =  20 * 1000; 
 
@@ -25,7 +26,7 @@ const autoUpdateQuizStatus = async () => {
 
 export default autoUpdateQuizStatus;
 
-export const getAllQuizUserUpcoming = async (req: any, res: any) => {
+export const getAllQuizUserUpcoming = async (req: Request, res: Response) => {
   try {
     await autoUpdateQuizStatus(); 
     const quizzes = await prisma.quiz.findMany({
@@ -43,9 +44,9 @@ export const getAllQuizUserUpcoming = async (req: any, res: any) => {
 };
 
 
-export const getAllQuizUserLive = async (req: any, res: any) => {
+export const getAllQuizUserLive = async (req: Request, res: Response) => {
   try {
-    await autoUpdateQuizStatus(); // 🔥 ADD THIS
+    await autoUpdateQuizStatus(); 
 
     const quizzes = await prisma.quiz.findMany({
       where: { status: "LIVE" },
@@ -62,7 +63,7 @@ export const getAllQuizUserLive = async (req: any, res: any) => {
 };
 
 
-export const fetchCompletedQuizzes = async (req: any, res: any) => {
+export const fetchCompletedQuizzes = async (req: Request, res: Response) => {
   try {
     const completedQuizzes = await prisma.quiz.findMany({
       where: { status: "COMPLETED" },
@@ -95,7 +96,7 @@ export const fetchCompletedQuizzes = async (req: any, res: any) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
-export const joinQuiz = async (req: any, res: any) => {
+export const joinQuiz = async (req: Request<{quizId:string}>, res: Response) => {
   try {
     const { quizId } = req.params;
     const userId = req.user.id;
@@ -154,7 +155,7 @@ export const joinQuiz = async (req: any, res: any) => {
   }
 };
 
-export const startQuizRound = async (req: any, res: any) => {
+export const startQuizRound = async (req: Request<{quizId:string,roundNumber:number | string}>, res: Response) => {
   const { quizId, roundNumber: roundNumberStr } = req.params;
   const userId = req.user.id;
   const roundNumber = Number(roundNumberStr);
@@ -230,7 +231,7 @@ export const startQuizRound = async (req: any, res: any) => {
 };
 
 
-export const submitRound = async (req: any, res: any) => {
+export const submitRound = async (req: Request<{roundId:string}>, res: Response) => {
   try {
     const { roundId } = req.params;
     const userId = req.user.id;
@@ -294,7 +295,7 @@ export const submitRound = async (req: any, res: any) => {
   }
 };
 
-export const getRoundResult = async (req: any, res: any) => {
+export const getRoundResult = async (req: Request<{roundId:string}>, res: Response) => {
   try {
     const { roundId } = req.params;
     const userId = req.user.id;
@@ -315,7 +316,6 @@ export const getRoundResult = async (req: any, res: any) => {
       return res.status(400).json({ message: "Round 1 start time not set" });
     }
 
-    // Global schedule derived from Round 1 start time
     let startTime = round1.roundStartTime.getTime();
     for (let i = 1; i < round.roundNumber; i++) {
       const prev = quizRounds.find((r) => r.roundNumber === i);
@@ -334,7 +334,6 @@ export const getRoundResult = async (req: any, res: any) => {
     let canStartNextRound = false;
 
     if (!roundOngoing && now >= endTime) {
-      // Qualification should be calculated AFTER round ends (not on every submit)
       await calculateRoundQualification(roundId);
 
       const refreshed = await prisma.round.findUnique({
@@ -380,7 +379,7 @@ export const getRoundResult = async (req: any, res: any) => {
   }
 };
 
-export const markWinner = async (req: any, res: any) => {
+export const markWinner = async (req: Request<{quizId:string}>, res: Response) => {
   try {
     const { quizId } = req.params;
     const userId = req.user.id;
@@ -437,7 +436,7 @@ export const markWinner = async (req: any, res: any) => {
   }
 };
 
-export const checkRound1Status = async (req: any, res: any) => {
+export const checkRound1Status = async (req: Request<{quizId:string}>, res: Response) => {
   try {
     const { quizId } = req.params;
 

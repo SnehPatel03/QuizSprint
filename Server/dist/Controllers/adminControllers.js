@@ -92,7 +92,7 @@ const getAllQuiz = async (req, res) => {
                 },
             },
             orderBy: {
-                createdAt: "desc", // ✅ FIXED
+                createdAt: "desc",
             },
         });
         const quizzesWithWinner = quizzes.map((quiz) => {

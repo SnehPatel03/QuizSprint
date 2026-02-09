@@ -1,9 +1,10 @@
+import { Request, Response, NextFunction } from "express";
 import { prisma } from "../lib/prisma";
 
 export const checkQuizLiveByqid = async (
-  req: any,
-  res: any,
-  next: any
+  req: Request<{id:string}>,
+  res: Response,
+  next: NextFunction,
 ) => {
   try {
     const { id } = req.params;
@@ -23,7 +24,8 @@ export const checkQuizLiveByqid = async (
 
     if (quiz.status !== "DRAFT") {
       return res.status(403).json({
-        message: "You can only edit or delete quizzes that are in DRAFT status. This quiz is already LIVE or COMPLETED.",
+        message:
+          "You can only edit or delete quizzes that are in DRAFT status. This quiz is already LIVE or COMPLETED.",
       });
     }
 

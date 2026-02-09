@@ -1,11 +1,10 @@
-import { any, z } from "zod";
+import { z } from "zod";
 import bcrypt from "bcrypt";
 import {prisma} from "../lib/prisma";
 import type { Response, Request } from "express";
 import generateTokenAndSaveInCookies from "../jwt/token";
 import { generateVerificationCode } from "../utils/generateVeriCode";
 import { sendVerificationCode } from "../utils/sendVerificationCode";
-import { AsyncLocalStorage } from "node:async_hooks";
 import { generateResetPasswordEmailTemplate } from "../utils/template";
 import { sendMail } from "../utils/sendMail";
 import crypto from "crypto";
@@ -227,7 +226,7 @@ export const login = async (req: Request, res: Response) => {
   });
 };
 
-export const logout = async (req: any, res: any) => {
+export const logout = async (req: Request, res: Response) => {
   return res.status(200).json({
     message: "Logged out successfully",
   });
@@ -291,9 +290,9 @@ export const forgotPassword = async (req: Request, res: Response) => {
   }
 };
 
-export const resetPassword = async (req: Request, res: Response | any) => {
+export const resetPassword = async (req: Request<{token:string}>, res: Response ) => {
   try {
-    const { token } :any= req.params;
+    const { token } = req.params;
     const { password } = req.body;
 
     if (!token || !password) {

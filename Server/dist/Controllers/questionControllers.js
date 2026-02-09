@@ -30,7 +30,6 @@ const createQuestionfor1 = async (req, res) => {
             });
         }
         const ROUND_NUMBER = 1;
-        // ✅ Find round 1
         const round = await prisma_1.prisma.round.findFirst({
             where: {
                 quizId,
@@ -46,7 +45,6 @@ const createQuestionfor1 = async (req, res) => {
         const questions = parsed.data.rounds[0].questions;
         const createdQuestions = [];
         for (const q of questions) {
-            // ✅ Validate correct option
             if (!q.options.some(o => o.isCorrect)) {
                 return res.status(400).json({
                     message: `Question "${q.text}" must have at least one correct option`,
@@ -106,7 +104,6 @@ const createQuestionfor2 = async (req, res) => {
         const questions = parsed.data.rounds[0].questions;
         const createdQuestions = [];
         for (const q of questions) {
-            // ✅ Validate correct option
             if (!q.options.some(o => o.isCorrect)) {
                 return res.status(400).json({
                     message: `Question "${q.text}" must have at least one correct option`,
@@ -162,11 +159,9 @@ const createQuestionfor3 = async (req, res) => {
                 message: `Round ${ROUND_NUMBER} not found for this quiz`,
             });
         }
-        // 👉 Take questions from first round only
         const questions = parsed.data.rounds[0].questions;
         const createdQuestions = [];
         for (const q of questions) {
-            // ✅ Validate correct option
             if (!q.options.some(o => o.isCorrect)) {
                 return res.status(400).json({
                     message: `Question "${q.text}" must have at least one correct option`,

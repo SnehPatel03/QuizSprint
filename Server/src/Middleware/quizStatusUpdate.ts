@@ -7,7 +7,7 @@ export const updateQuizStatusMiddleware = async (req: any, res: any, next: any) 
     const quizzes = await prisma.quiz.findMany({});
 
     for (const quiz of quizzes) {
-      // If DRAFT and startTime passed → LIVE
+
       if (quiz.status === "DRAFT" && now >= quiz.startTime) {
         await prisma.quiz.update({
           where: { id: quiz.id },

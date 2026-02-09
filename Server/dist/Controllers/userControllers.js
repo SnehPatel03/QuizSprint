@@ -40,7 +40,7 @@ const getAllQuizUserUpcoming = async (req, res) => {
 exports.getAllQuizUserUpcoming = getAllQuizUserUpcoming;
 const getAllQuizUserLive = async (req, res) => {
     try {
-        await autoUpdateQuizStatus(); // 🔥 ADD THIS
+        await autoUpdateQuizStatus();
         const quizzes = await prisma_1.prisma.quiz.findMany({
             where: { status: "LIVE" },
         });
@@ -264,7 +264,6 @@ const submitRound = async (req, res) => {
     }
 };
 exports.submitRound = submitRound;
-// ----------------- GET ROUND RESULT -----------------
 const getRoundResult = async (req, res) => {
     try {
         const { roundId } = req.params;
@@ -283,7 +282,6 @@ const getRoundResult = async (req, res) => {
         if (!round1?.roundStartTime) {
             return res.status(400).json({ message: "Round 1 start time not set" });
         }
-        // Global schedule derived from Round 1 start time
         let startTime = round1.roundStartTime.getTime();
         for (let i = 1; i < round.roundNumber; i++) {
             const prev = quizRounds.find((r) => r.roundNumber === i);
@@ -300,7 +298,6 @@ const getRoundResult = async (req, res) => {
         let bufferTimeRemaining = 0;
         let canStartNextRound = false;
         if (!roundOngoing && now >= endTime) {
-            // Qualification should be calculated AFTER round ends (not on every submit)
             await (0, QualificationLogic_1.calculateRoundQualification)(roundId);
             const refreshed = await prisma_1.prisma.round.findUnique({
                 where: { id: roundId },

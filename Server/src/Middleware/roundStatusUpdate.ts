@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { prisma } from "../lib/prisma";
 
-export const checkUserRoundTime = async (req: Request | any, res: Response | any, next: NextFunction) => {
+export const checkUserRoundTime = async (req: Request , res: Response , next: NextFunction) => {
   try {
     const { roundId, userId } = req.body;
 

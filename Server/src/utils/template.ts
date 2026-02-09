@@ -1,4 +1,4 @@
-export function generateResetPasswordEmailTemplate(resetPasswordUrl: any) {
+export function generateResetPasswordEmailTemplate(resetPasswordUrl: number | string) {
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -113,7 +113,7 @@ export function generateResetPasswordEmailTemplate(resetPasswordUrl: any) {
 `;
 }
 
-export function generateVerificationCodeEmailTemplate(verificationCode: any) {
+export function generateVerificationCodeEmailTemplate(verificationCode: number | string) {
   return `
 <!DOCTYPE html>
 <html lang="en">

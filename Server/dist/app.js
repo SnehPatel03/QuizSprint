@@ -15,21 +15,8 @@ dotenv_1.default.config();
 const app = (0, express_1.default)();
 const PORT = process.env.PORT || 3000;
 app.use((0, cors_1.default)({
-    origin: (origin, callback) => {
-        const allowedOrigins = [
-            "http://localhost:5173",
-            "https://quizsprint-client.vercel.app"
-        ];
-        if (!origin || allowedOrigins.includes(origin)) {
-            callback(null, true);
-        }
-        else {
-            callback(new Error("Not allowed by CORS"));
-        }
-    },
+    origin: 'https://quiz-sprint-client.vercel.app',
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
 }));
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
@@ -41,4 +28,7 @@ app.use("/auth", authRoutes_1.default);
 app.use("/admin", adminRoutes_1.default);
 app.use("/admin/question", questionRoutes_1.default);
 app.use("/user", userRoutes_1.default);
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+});
 exports.default = app;
