@@ -36,7 +36,7 @@ const UpdatePopUp = ({ onClose, onSuccess, quiz }) => {
       startTime: quiz.startTime
         ? toDatetimeLocalValue(quiz.startTime)
         : "",
-      timeLimit1: quiz.timeLimit1 ?? "",
+      timeLimit1: quiz.timeLimit1 ?? "No change",
       timeLimit2: quiz.timeLimit2 ?? "",
       timeLimit3: quiz.timeLimit3 ?? "",
     });

@@ -27,14 +27,12 @@ interface Round {
   id: string;
   roundNumber: number;
   timeLimit: number;
-
 }
 
 interface QuizAttempt {
   id: string;
   isWinner: boolean;
 }
-
 
 interface QuizResponse {
   message: string;
@@ -187,7 +185,8 @@ export const updateQuiz = async (
       timeLimit3,
     } = req.body;
 
-    const quiz = await prisma.quiz.update({
+    // 1️⃣ Update Quiz
+    await prisma.quiz.update({
       where: { id },
       data: {
         title,
@@ -199,6 +198,7 @@ export const updateQuiz = async (
       },
     });
 
+    // 2️⃣ Update Rounds
     await prisma.round.updateMany({
       where: { quizId: id, roundNumber: 1 },
       data: { timeLimit: Number(timeLimit1) },
@@ -214,11 +214,22 @@ export const updateQuiz = async (
       data: { timeLimit: Number(timeLimit3) },
     });
 
+    // 3️⃣ Fetch Updated Quiz WITH ROUNDS
+    const updatedQuiz = await prisma.quiz.findUnique({
+      where: { id },
+      include: {
+        rounds: {
+          orderBy: { roundNumber: "asc" },
+        },
+      },
+    });
+
     res.status(200).json({
       success: true,
       message: "Quiz updated successfully",
-      quiz,
+      quiz: updatedQuiz,
     });
+
   } catch (error) {
     console.error("Update Quiz Error:", error);
     res.status(500).json({
@@ -227,6 +238,7 @@ export const updateQuiz = async (
     });
   }
 };
+
 
 export const deleteQuiz = async (
   req: Request<{ id: string }>,
@@ -267,7 +279,7 @@ export const getQuizStatus = async (
       return res.status(404).json({ message: "Quiz not found" });
     }
 
-    const round1:any = quiz.rounds[0];
+    const round1: any = quiz.rounds[0];
     const now = nowUTC();
 
     if (!round1?.roundStartTime || now < round1.roundStartTime) {

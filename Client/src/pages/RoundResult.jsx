@@ -172,10 +172,14 @@ const RoundResult = () => {
     );
   }
 
-  const isWinner = isFinalRound && leaderboard[0]?.userId === myStatus?.userId;
+  const isWinner =
+    isFinalRound && leaderboard[0]?.userId === myStatus?.userId;
 
   const showDashboardButton =
     (!myStatus?.qualified && !isFinalRound) || isWinner;
+
+  const qualifiedCount = leaderboard.filter((u) => u.qualified).length;
+  const eliminatedCount = leaderboard.filter((u) => !u.qualified).length;
 
   return (
     <div className="min-h-screen bg-black px-6 py-10 text-slate-200">
@@ -196,21 +200,31 @@ const RoundResult = () => {
               isWinner
                 ? "bg-yellow-500/10 border-yellow-500 text-yellow-300"
                 : isFinalRound
-                  ? "bg-red-500/10 border-red-500 text-red-300"
-                  : myStatus.qualified
-                    ? "bg-emerald-500/10 border-emerald-500 text-emerald-300"
-                    : "bg-red-500/10 border-red-500 text-red-300"
+                ? "bg-red-500/10 border-red-500 text-red-300"
+                : myStatus.qualified
+                ? "bg-emerald-500/10 border-emerald-500 text-emerald-300"
+                : "bg-red-500/10 border-red-500 text-red-300"
             }`}
           >
             {isWinner
               ? "🏆 You are the WINNER!"
               : isFinalRound
-                ? "👏 Nice try! You are eliminated"
-                : myStatus.qualified
-                  ? "🎉 Qualified for next round"
-                  : "👏 Nice try! You are eliminated"}
+              ? "👏 Nice try! You are eliminated"
+              : myStatus.qualified
+              ? "🎉 Qualified for next round"
+              : "👏 Nice try! You are eliminated"}
           </div>
         )}
+
+        {/* Qualification Summary */}
+        <div className="flex justify-center gap-8 mb-6 text-sm font-medium">
+          <div className="text-emerald-400">
+            Qualified: {qualifiedCount}
+          </div>
+          <div className="text-red-400">
+            Eliminated: {eliminatedCount}
+          </div>
+        </div>
 
         <div className="overflow-hidden rounded-2xl border border-slate-800 mb-8">
           <table className="w-full text-sm">
@@ -223,14 +237,46 @@ const RoundResult = () => {
               </tr>
             </thead>
             <tbody>
-              {leaderboard.map((user, idx) => (
-                <tr key={user.userId} className="border-t border-slate-800">
-                  <td className="p-4 font-bold text-white">{idx + 1}</td>
-                  <td className="p-4 text-left">{user.name}</td>
-                  <td className="p-4 font-semibold">{user.correctScore}</td>
-                  <td className="p-4">{formatTime(user.timeTaken)}</td>
-                </tr>
-              ))}
+              {leaderboard.map((user, idx) => {
+                const isCurrentUser =
+                  user.userId === myStatus?.userId;
+
+                let rowStyle = "border-t border-slate-800";
+
+                if (isCurrentUser) {
+                  rowStyle +=
+                    " bg-blue-500/10 border-l-4 border-blue-400";
+                } else if (user.qualified) {
+                  rowStyle += " bg-emerald-500/5";
+                } else {
+                  rowStyle += " bg-red-500/5";
+                }
+
+                return (
+                  <tr
+                    key={user.userId}
+                    className={`${rowStyle} transition`}
+                  >
+                    <td className="p-4 font-bold text-white">
+                      {idx + 1}
+                      {isCurrentUser && (
+                        <span className="ml-2 text-xs text-blue-400">
+                          (You)
+                        </span>
+                      )}
+                    </td>
+                    <td className="p-4 text-left">
+                      {user.name}
+                    </td>
+                    <td className="p-4 font-semibold">
+                      {user.correctScore}
+                    </td>
+                    <td className="p-4">
+                      {formatTime(user.timeTaken)}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
